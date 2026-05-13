@@ -1,0 +1,199 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useChat } from '@/context/ChatContext';
+import { getOrders } from '@/lib/orders';
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: string;
+  exact?: boolean;
+  badge?: 'orders' | 'chat';
+}
+
+const NAV: { group?: string; items: NavItem[] }[] = [
+  {
+    items: [{ href: '/seller', label: 'Dashboard', icon: '🏠', exact: true }],
+  },
+  {
+    group: 'Kelola Toko',
+    items: [
+      { href: '/seller/products',     label: 'Daftar Produk',  icon: '📚' },
+      { href: '/seller/products/add', label: 'Tambah Produk',  icon: '➕' },
+      { href: '/seller/orders',       label: 'Pesanan',        icon: '📬', badge: 'orders' },
+      { href: '/seller/chat',         label: 'Chat',           icon: '💬', badge: 'chat'   },
+    ],
+  },
+];
+
+export default function SellerShell({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const { unreadForSeller } = useChat();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [newOrders, setNewOrders] = useState(0);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) router.push('/login');
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    const orders = getOrders();
+    setNewOrders(orders.filter(o => o.status === 'Pesanan Masuk').length);
+  }, [pathname]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-96 text-gray-400">Memuat...</div>;
+  }
+  if (!user) return null;
+
+  if (user.role !== 'seller') {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-4 text-center px-4">
+        <p className="text-4xl">🔒</p>
+        <h2 className="text-xl font-bold text-gray-700">Akses Ditolak</h2>
+        <p className="text-gray-400 text-sm">Halaman ini hanya untuk akun Seller.</p>
+        <Link href="/register"
+          className="bg-red-700 text-white px-6 py-2 rounded-lg hover:bg-red-800 transition-colors text-sm font-medium">
+          Daftar sebagai Seller
+        </Link>
+      </div>
+    );
+  }
+
+  const badgeVal = (badge?: 'orders' | 'chat') =>
+    badge === 'orders' ? newOrders : badge === 'chat' ? unreadForSeller : 0;
+
+  const hasActivity = newOrders > 0 || unreadForSeller > 0;
+
+  return (
+    <div className="fixed top-14 left-0 right-0 bottom-0 z-10 flex">
+      {/* ── Sidebar ── */}
+      <aside
+        className={`bg-gray-900 text-white flex flex-col shrink-0 transition-all duration-200 ${
+          collapsed ? 'w-14' : 'w-56'
+        }`}
+      >
+        {/* Store info */}
+        <div className={`border-b border-gray-700 ${collapsed ? 'px-2 py-4' : 'px-4 py-4'}`}>
+          {collapsed ? (
+            <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center font-bold text-sm mx-auto">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-sm truncate leading-tight">{user.name}</p>
+                  <span className="text-[10px] text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded-full">
+                    Seller Reguler
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+            </>
+          )}
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
+          {NAV.map((section, si) => (
+            <div key={si} className={si > 0 ? 'mt-4' : ''}>
+              {section.group && !collapsed && (
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest px-2 mb-1.5">
+                  {section.group}
+                </p>
+              )}
+              {section.items.map(item => {
+                const active = item.exact
+                  ? pathname === item.href
+                  : pathname.startsWith(item.href);
+                const badge = badgeVal(item.badge);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={`flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-colors mb-0.5 ${
+                      collapsed ? 'justify-center' : 'justify-between'
+                    } ${active ? 'bg-red-700 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <span className="text-base leading-none">{item.icon}</span>
+                      {!collapsed && <span>{item.label}</span>}
+                    </span>
+                    {!collapsed && badge > 0 && (
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full text-white ${
+                        item.badge === 'chat' ? 'bg-yellow-500 text-gray-900' : 'bg-orange-500'
+                      }`}>
+                        {badge}
+                      </span>
+                    )}
+                    {collapsed && badge > 0 && (
+                      <span className="absolute ml-5 -mt-5 bg-red-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className={`border-t border-gray-700 ${collapsed ? 'p-2' : 'p-3'}`}>
+          <button
+            onClick={() => setCollapsed(v => !v)}
+            className="w-full flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-700"
+            title={collapsed ? 'Tampilkan Menu' : 'Sembunyikan Menu'}
+          >
+            <span>{collapsed ? '→' : '←'}</span>
+            {!collapsed && <span>Sembunyikan Menu</span>}
+          </button>
+          {!collapsed && (
+            <Link href="/" className="flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-700 mt-1">
+              <span>🏪</span>
+              <span>Kembali ke Toko</span>
+            </Link>
+          )}
+        </div>
+      </aside>
+
+      {/* ── Content ── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Notification bar */}
+        {hasActivity && (
+          <div className="bg-amber-50 border-b border-amber-200 px-5 py-2.5 flex items-center gap-3 shrink-0">
+            <span className="text-amber-500 text-sm">🔔</span>
+            <div className="flex items-center gap-4 text-sm text-amber-800 font-medium">
+              {newOrders > 0 && (
+                <Link href="/seller/orders" className="hover:underline">
+                  {newOrders} pesanan baru menunggu
+                </Link>
+              )}
+              {newOrders > 0 && unreadForSeller > 0 && <span className="text-amber-300">·</span>}
+              {unreadForSeller > 0 && (
+                <Link href="/seller/chat" className="hover:underline">
+                  {unreadForSeller} pesan belum dibaca
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 bg-gray-50 overflow-auto">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
