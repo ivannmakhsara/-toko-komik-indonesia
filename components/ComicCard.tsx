@@ -29,7 +29,7 @@ export default function ComicCard({ comic }: { comic: Comic }) {
             <p className="text-white/80 text-center font-display font-semibold text-xs leading-snug line-clamp-3 tracking-tight">
               {comic.title}
             </p>
-            <p className="text-white/30 text-[10px] text-center line-clamp-1">{comic.author}</p>
+            {comic.author && <p className="text-white/30 text-[10px] text-center line-clamp-1">{comic.author}</p>}
           </div>
         )}
 
@@ -57,7 +57,7 @@ export default function ComicCard({ comic }: { comic: Comic }) {
       {/* ── Metadata ── */}
       <Link href={`/products/${comic.id}`} className="block px-3.5 pt-3 pb-3.5 space-y-0.5">
         <p className="text-[#F2F2F0] text-[13px] font-semibold leading-snug line-clamp-1 tracking-tight">{comic.title}</p>
-        <p className="text-white/35 text-[11px] truncate">{comic.author}</p>
+        {comic.author && <p className="text-white/35 text-[11px] truncate">{comic.author}</p>}
         <div className="flex items-center justify-between pt-2">
           <p className="text-[#D90429] text-[13px] font-bold tracking-tight">{formatRupiah(comic.price)}</p>
           <div className="flex items-center gap-1">

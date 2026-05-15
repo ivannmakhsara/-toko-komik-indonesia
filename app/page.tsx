@@ -228,6 +228,19 @@ export default function HomePage() {
                   className={`h-1.5 rounded-full transition-all duration-300 ${i === slide ? 'bg-white w-6' : 'bg-white/25 w-1.5'}`} />
               ))}
             </div>
+
+            {/* Mobile: compact comic covers (hidden on sm+) */}
+            {heroComics.length > 0 && (
+              <div className="flex gap-3 sm:hidden mt-6">
+                {heroComics.map((c, i) => (
+                  <Link key={c.id} href={`/products/${c.id}`}
+                    className="rounded-[14px] overflow-hidden border border-white/[0.10] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:scale-105 transition-transform duration-200"
+                    style={{ width: 72, height: 100, opacity: [0.65, 1, 0.65][i] }}>
+                    <ComicCover comic={c} className="w-full h-full" />
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right — floating comic covers */}

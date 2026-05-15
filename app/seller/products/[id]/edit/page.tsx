@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSeller } from '@/context/SellerContext';
 import ProductForm from '@/components/ProductForm';
@@ -9,6 +9,7 @@ import { Comic } from '@/lib/types';
 export default function EditProductPage() {
   const { id } = useParams<{ id: string }>();
   const { sellerProducts, updateProduct } = useSeller();
+  const router = useRouter();
 
   const product = sellerProducts.find(p => p.id === id);
 
@@ -33,7 +34,10 @@ export default function EditProductPage() {
       <p className="text-white/35 text-sm mb-6">Perbarui informasi komikmu</p>
       <ProductForm
         initial={initial}
-        onSubmit={(data: Omit<Comic, 'id'>) => updateProduct(id, data)}
+        onSubmit={(data: Omit<Comic, 'id'>) => {
+          updateProduct(id, data);
+          router.push('/seller/products');
+        }}
         submitLabel="Simpan Perubahan"
       />
     </div>

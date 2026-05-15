@@ -9,9 +9,9 @@ import { formatRupiah } from '@/lib/data';
 import { getOrders, Order, OrderStatus } from '@/lib/orders';
 
 const TIPS_ARTICLES = [
-  { icon: '📈', title: 'Tips Meningkatkan Penjualan Komik', category: 'Strategi', date: '13 Mei 26' },
-  { icon: '📦', title: 'Cara Mengelola Stok dengan Efisien', category: 'Operasional', date: '10 Mei 26' },
-  { icon: '📸', title: 'Pentingnya Foto Produk yang Menarik', category: 'Marketing', date: '5 Mei 26' },
+  { icon: '📈', title: 'Tips Meningkatkan Penjualan Komik', category: 'Strategi', date: '13 Mei 26', slug: 'tips-penjualan' },
+  { icon: '📦', title: 'Cara Mengelola Stok dengan Efisien', category: 'Operasional', date: '10 Mei 26', slug: 'kelola-stok' },
+  { icon: '📸', title: 'Pentingnya Foto Produk yang Menarik', category: 'Marketing', date: '5 Mei 26', slug: 'foto-produk' },
 ];
 
 const ALL_STATUSES: OrderStatus[] = ['Pesanan Masuk', 'Diproses', 'Dikirim', 'Sampai', 'Selesai'];
@@ -26,12 +26,15 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
 };
 
 export default function SellerDashboard() {
-  const { sellerProducts } = useSeller();
+  const { sellerProducts, deleteAllProducts } = useSeller();
   const { unreadForSeller } = useChat();
   const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [showRevenue, setShowRevenue] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState('');
+  const [orders,          setOrders]          = useState<Order[]>([]);
+  const [showRevenue,     setShowRevenue]     = useState(false);
+  const [showDeleteStore, setShowDeleteStore] = useState(false);
+  const [deletingStore,   setDeletingStore]   = useState(false);
+  const [wishlistCount,   setWishlistCount]   = useState(0);
+  const [lastUpdated,     setLastUpdated]     = useState('');
 
   useEffect(() => {
     getOrders().then(setOrders);
@@ -42,6 +45,14 @@ export default function SellerDashboard() {
       }) + ' WIB'
     );
   }, []);
+
+  useEffect(() => {
+    try {
+      const wishlist: { id: string }[] = JSON.parse(localStorage.getItem('tki-wishlist') || '[]');
+      const sellerIds = new Set(sellerProducts.map(p => p.id));
+      setWishlistCount(wishlist.filter(c => sellerIds.has(c.id)).length);
+    } catch { setWishlistCount(0); }
+  }, [sellerProducts]);
 
   const totalRevenue   = orders.reduce((s, o) => s + o.total, 0);
   const newOrders      = orders.filter(o => o.status === 'Pesanan Masuk').length;
@@ -73,6 +84,7 @@ export default function SellerDashboard() {
     { label: 'Siap Dikirim',   value: readyToShip,           icon: '📦', href: '/seller/orders',   accent: 'text-blue-400'   },
     { label: 'Chat Baru',      value: unreadForSeller,       icon: '💬', href: '/seller/chat',     accent: 'text-[#D90429]'  },
     { label: 'Produk Aktif',   value: sellerProducts.length, icon: '📚', href: '/seller/products', accent: 'text-purple-400' },
+    { label: 'Di Wishlist',    value: wishlistCount,         icon: '🤍', href: '/seller/products', accent: 'text-pink-400'   },
   ];
 
   return (
@@ -87,7 +99,7 @@ export default function SellerDashboard() {
             <p className="text-[11px] text-white/25 mb-3 font-semibold uppercase tracking-widest">
               Aktivitas yang perlu kamu pantau
             </p>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {ACTIVITY.map(a => (
                 <Link key={a.label} href={a.href}
                   className="bg-[#111113] border border-white/[0.07] rounded-[14px] p-4 hover:border-white/[0.12] hover:bg-white/[0.04] transition-all">
@@ -279,6 +291,21 @@ export default function SellerDashboard() {
             </div>
           </div>
 
+          {/* Lihat toko */}
+          {user?.id && (
+            <Link href={`/toko/${user.id}`}
+              className="w-full py-2 flex items-center justify-center gap-1.5 rounded-[10px] border border-white/[0.08] text-white/40 text-xs font-semibold hover:border-white/[0.15] hover:text-white/60 transition-colors">
+              Lihat Tampilan Toko →
+            </Link>
+          )}
+
+          {/* Delete store */}
+          <button
+            onClick={() => setShowDeleteStore(true)}
+            className="w-full py-2 rounded-[10px] border border-red-500/20 text-red-400/50 text-xs font-semibold hover:border-red-500/40 hover:text-red-400/80 hover:bg-red-500/[0.05] transition-colors">
+            🗑 Hapus Toko &amp; Semua Produk
+          </button>
+
           {/* Quick actions */}
           <div>
             <p className="font-semibold text-white/40 text-[11px] uppercase tracking-widest mb-2">Aksi Cepat</p>
@@ -309,21 +336,53 @@ export default function SellerDashboard() {
             <p className="font-semibold text-white/40 text-[11px] uppercase tracking-widest mb-3">Tips Jualan</p>
             <div className="space-y-3">
               {TIPS_ARTICLES.map((a, i) => (
-                <div key={i} className="flex gap-3">
+                <Link key={i} href={`/seller/tips/${a.slug}`} className="flex gap-3 hover:bg-white/[0.03] rounded-[10px] p-1 -m-1 transition-colors">
                   <div className="w-12 h-12 bg-[#D90429]/10 border border-[#D90429]/15 rounded-[10px] shrink-0 flex items-center justify-center text-xl">
                     {a.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white/60 leading-snug mb-1">{a.title}</p>
+                    <p className="text-xs font-semibold text-white/60 leading-snug mb-1 hover:text-white/80 transition-colors">{a.title}</p>
                     <p className="text-[10px] text-white/25">{a.category} · {a.date}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
 
         </div>
       </div>
+
+      {/* Delete store modal */}
+      {showDeleteStore && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowDeleteStore(false)}>
+          <div className="bg-[#111113] border border-white/[0.10] rounded-[20px] p-6 w-full max-w-sm"
+            onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-[14px] flex items-center justify-center text-2xl mx-auto mb-4">🗑</div>
+            <h3 className="font-display font-bold text-[#F2F2F0] text-center mb-2">Hapus Toko?</h3>
+            <p className="text-white/40 text-sm text-center mb-5">
+              Semua produk tokomu akan dihapus permanen. Pesanan yang sudah masuk tidak terpengaruh.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteStore(false)}
+                className="flex-1 py-2.5 rounded-[10px] border border-white/[0.10] text-white/45 hover:text-white/70 text-sm transition-colors">
+                Batal
+              </button>
+              <button
+                disabled={deletingStore}
+                onClick={async () => {
+                  setDeletingStore(true);
+                  await deleteAllProducts();
+                  setDeletingStore(false);
+                  setShowDeleteStore(false);
+                }}
+                className="flex-1 py-2.5 rounded-[10px] bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50">
+                {deletingStore ? 'Menghapus...' : 'Ya, Hapus Toko'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Revenue breakdown modal */}
       {showRevenue && (

@@ -84,20 +84,21 @@ export default function SellerOrdersPage() {
     reload();
   }
 
-  const canCancel = (s: OrderStatus) => s === 'Pesanan Masuk' || s === 'Diproses';
-  const filtered  = filter === 'Semua' ? orders : orders.filter(o => o.status === filter);
-  const countBy   = (s: OrderStatus) => orders.filter(o => o.status === s).length;
+  const canCancel    = (s: OrderStatus) => s === 'Pesanan Masuk' || s === 'Diproses';
+  const activeOrders = orders.filter(o => o.status !== 'Dibatalkan');
+  const filtered     = filter === 'Semua' ? activeOrders : activeOrders.filter(o => o.status === filter);
+  const countBy      = (s: OrderStatus) => activeOrders.filter(o => o.status === s).length;
 
   return (
     <div className="p-6 lg:p-8 bg-[#0A0A0B] min-h-screen">
       <h1 className="font-display text-2xl font-bold text-[#F2F2F0] mb-1 tracking-tight">Daftar Pesanan</h1>
-      <p className="text-white/35 text-sm mb-6">{orders.length} total pesanan</p>
+      <p className="text-white/35 text-sm mb-6">{activeOrders.length} pesanan aktif</p>
 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
         <button onClick={() => setFilter('Semua')}
           className={`px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${filter === 'Semua' ? 'bg-white/[0.10] text-white border border-white/[0.15]' : 'bg-white/[0.04] border border-white/[0.07] text-white/40 hover:text-white/65'}`}>
-          Semua ({orders.length})
+          Semua ({activeOrders.length})
         </button>
         {ACTIVE_STEPS.map(s => (
           <button key={s} onClick={() => setFilter(s)}

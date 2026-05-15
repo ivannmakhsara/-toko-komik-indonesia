@@ -172,6 +172,9 @@ function ProfileContent() {
   const [orders,    setOrders]    = useState<Order[]>([]);
   const [editing,   setEditing]   = useState(false);
   const [editName,  setEditName]  = useState('');
+  const [avatar,    setAvatar]    = useState<string | null>(null);
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Cancel modal state
   const [cancelModal,      setCancelModal]      = useState<string | null>(null);
@@ -207,9 +210,33 @@ function ProfileContent() {
   }
 
   useEffect(() => {
-    if (user) { refreshOrders(); setEditName(user.name); refreshReviewedKeys(); }
+    if (user) {
+      refreshOrders();
+      setEditName(user.name);
+      refreshReviewedKeys();
+      setAvatar(localStorage.getItem(`tki-avatar-${user.id}`));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, user?.email, user?.name]);
+
+  function handleAvatarUpload(file: File | null) {
+    if (!file || !user) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const b64 = e.target?.result as string;
+      localStorage.setItem(`tki-avatar-${user.id}`, b64);
+      setAvatar(b64);
+      window.dispatchEvent(new Event('avatar-changed'));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleAvatarDelete() {
+    if (!user) return;
+    localStorage.removeItem(`tki-avatar-${user.id}`);
+    setAvatar(null);
+    window.dispatchEvent(new Event('avatar-changed'));
+  }
 
   // ── Cancel flow ──
   function openCancelModal(orderId: string) {
@@ -307,9 +334,36 @@ function ProfileContent() {
         {/* ── Profile card ── */}
         <div className="bg-[#111113] border border-white/[0.07] rounded-[20px] p-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-[#D90429]/20 border border-[#D90429]/30 rounded-full flex items-center justify-center text-2xl font-bold text-[#D90429] shrink-0">
-              {user.name.charAt(0).toUpperCase()}
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <button
+                onClick={() => avatarInputRef.current?.click()}
+                className="w-14 h-14 rounded-full relative group overflow-hidden border-2 border-[#D90429]/30 hover:border-[#D90429]/60 transition-colors"
+                title="Ganti foto profil"
+              >
+                {avatar
+                  ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full bg-[#D90429]/20 flex items-center justify-center text-2xl font-bold text-[#D90429]">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                }
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white text-xs font-semibold">Ganti</span>
+                </div>
+              </button>
+              {avatar && (
+                <button onClick={handleAvatarDelete}
+                  className="text-[10px] text-red-400/50 hover:text-red-400 transition-colors">
+                  Hapus
+                </button>
+              )}
             </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => { handleAvatarUpload(e.target.files?.[0] ?? null); (e.target as HTMLInputElement).value = ''; }}
+            />
             {editing ? (
               <div className="flex-1 flex gap-2 items-center">
                 <input value={editName} onChange={e => setEditName(e.target.value)}
@@ -355,10 +409,14 @@ function ProfileContent() {
           )}
 
           {user.role === 'seller' && (
-            <div className="mt-4 border-t border-white/[0.06] pt-4">
+            <div className="mt-4 border-t border-white/[0.06] pt-4 flex items-center gap-3 flex-wrap">
               <Link href="/seller"
                 className="inline-flex items-center gap-2 bg-[#D90429]/10 border border-[#D90429]/20 text-[#D90429] px-4 py-2 rounded-[12px] text-sm font-semibold hover:bg-[#D90429]/15 transition-colors">
                 🏪 Kelola Toko Saya →
+              </Link>
+              <Link href={`/toko/${user.id}`}
+                className="inline-flex items-center gap-2 border border-white/[0.10] text-white/50 px-4 py-2 rounded-[12px] text-sm font-semibold hover:border-white/20 hover:text-white/70 transition-colors">
+                Lihat Toko →
               </Link>
             </div>
           )}

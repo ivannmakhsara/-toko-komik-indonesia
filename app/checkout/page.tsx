@@ -8,13 +8,13 @@ import { saveOrder } from '@/lib/orders';
 import { formatRupiah } from '@/lib/data';
 import Link from 'next/link';
 
-const SHIPPING_OPTIONS = [
-  { value: 'jne-reg',    label: 'JNE Reguler',     estimate: '2-3 hari', price: 15000 },
-  { value: 'jne-yes',    label: 'JNE YES',          estimate: '1-2 hari', price: 25000 },
-  { value: 'jt-express', label: 'J&T Express',      estimate: '2-3 hari', price: 14000 },
-  { value: 'sicepat',    label: 'SiCepat REG',      estimate: '2-3 hari', price: 13000 },
-  { value: 'anteraja',   label: 'Anteraja',          estimate: '1-2 hari', price: 20000 },
-  { value: 'pos',        label: 'Pos Indonesia',     estimate: '3-5 hari', price: 10000 },
+const SHIPPING_BASE = [
+  { value: 'jne-reg',    label: 'JNE Reguler',    estimate: '2-3 hari', per500g: 9000  },
+  { value: 'jne-yes',    label: 'JNE YES',         estimate: '1-2 hari', per500g: 15000 },
+  { value: 'jt-express', label: 'J&T Express',     estimate: '2-3 hari', per500g: 8000  },
+  { value: 'sicepat',    label: 'SiCepat REG',     estimate: '2-3 hari', per500g: 7500  },
+  { value: 'anteraja',   label: 'Anteraja',         estimate: '1-2 hari', per500g: 12000 },
+  { value: 'pos',        label: 'Pos Indonesia',    estimate: '3-5 hari', per500g: 5000  },
 ];
 
 const VA_OPTIONS = [
@@ -59,6 +59,11 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  /* Weight-based shipping cost: ceil(totalGrams / 500) × per500g rate */
+  const totalWeightGrams = items.reduce((s, { comic, quantity }) => s + (comic.weight ?? 300) * quantity, 0);
+  const weightUnits = Math.max(1, Math.ceil(totalWeightGrams / 500));
+  const SHIPPING_OPTIONS = SHIPPING_BASE.map(o => ({ ...o, price: o.per500g * weightUnits }));
 
   const selectedShipping = SHIPPING_OPTIONS.find(o => o.value === form.shipping);
   const shippingCost = selectedShipping?.price ?? 0;
@@ -170,6 +175,10 @@ export default function CheckoutPage() {
           </Card>
 
           <Card title="Pilih Ekspedisi">
+            <p className="text-xs text-white/25 mb-3">
+              Berat total: <span className="text-white/45 font-medium">{totalWeightGrams}g</span>
+              {' · '}Tarif per 500g × {weightUnits} unit
+            </p>
             <div className="flex flex-col gap-2">
               {SHIPPING_OPTIONS.map(opt => (
                 <label key={opt.value}

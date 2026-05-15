@@ -12,6 +12,7 @@ interface NavItem {
   label: string;
   icon: string;
   exact?: boolean;
+  exactExcludeAdd?: boolean;
   badge?: 'orders' | 'chat';
 }
 
@@ -22,8 +23,8 @@ const NAV: { group?: string; items: NavItem[] }[] = [
   {
     group: 'Kelola Toko',
     items: [
-      { href: '/seller/products',     label: 'Daftar Produk',  icon: '📚' },
-      { href: '/seller/products/add', label: 'Tambah Produk',  icon: '➕' },
+      { href: '/seller/products',     label: 'Daftar Produk',  icon: '📚', exactExcludeAdd: true },
+      { href: '/seller/products/add', label: 'Tambah Produk',  icon: '➕', exact: true },
       { href: '/seller/orders',       label: 'Pesanan',        icon: '📬', badge: 'orders' },
       { href: '/seller/chat',         label: 'Chat',           icon: '💬', badge: 'chat'   },
     ],
@@ -117,7 +118,9 @@ export default function SellerShell({ children }: { children: React.ReactNode })
               {section.items.map(item => {
                 const active = item.exact
                   ? pathname === item.href
-                  : pathname.startsWith(item.href);
+                  : item.exactExcludeAdd
+                    ? pathname.startsWith(item.href) && pathname !== '/seller/products/add'
+                    : pathname.startsWith(item.href);
                 const badge = badgeVal(item.badge);
                 return (
                   <Link

@@ -12,9 +12,10 @@ interface SellerContextType {
   sellerProducts: Comic[];
   allProducts:    Comic[];
   loading:        boolean;
-  addProduct:    (product: Omit<Comic, 'id' | 'sellerId' | 'sellerName'>) => Promise<void>;
-  updateProduct: (id: string, product: Omit<Comic, 'id' | 'sellerId' | 'sellerName'>) => Promise<void>;
-  deleteProduct: (id: string) => Promise<void>;
+  addProduct:        (product: Omit<Comic, 'id' | 'sellerId' | 'sellerName'>) => Promise<void>;
+  updateProduct:     (id: string, product: Omit<Comic, 'id' | 'sellerId' | 'sellerName'>) => Promise<void>;
+  deleteProduct:     (id: string) => Promise<void>;
+  deleteAllProducts: () => Promise<void>;
 }
 
 const SellerContext = createContext<SellerContextType | null>(null);
@@ -148,6 +149,19 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
   }
 
+  async function deleteAllProducts() {
+    if (!user) return;
+    const { data: { user: sbUser } } = await supabase.auth.getUser();
+    if (sbUser) {
+      const mine = dbProducts.filter(p => p.sellerId === sbUser.id);
+      await Promise.all(mine.map(p => supabase.from('products').delete().eq('id', p.id)));
+      setDbProducts(prev => prev.filter(p => p.sellerId !== sbUser.id));
+    }
+    const updatedLocal = localProducts.filter(p => p.sellerId !== user.id);
+    setLocalProducts(updatedLocal);
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(updatedLocal));
+  }
+
   const sellerProducts = user
     ? allDbAndLocal.filter(p => p.sellerId === user.id)
     : [];
@@ -155,7 +169,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
   const allProducts = [...allDbAndLocal, ...staticComics];
 
   return (
-    <SellerContext.Provider value={{ sellerProducts, allProducts, loading, addProduct, updateProduct, deleteProduct }}>
+    <SellerContext.Provider value={{ sellerProducts, allProducts, loading, addProduct, updateProduct, deleteProduct, deleteAllProducts }}>
       {children}
     </SellerContext.Provider>
   );

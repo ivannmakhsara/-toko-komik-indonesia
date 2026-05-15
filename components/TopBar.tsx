@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useSeller } from '@/context/SellerContext';
@@ -20,13 +20,36 @@ export default function TopBar() {
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  const results = search.length > 1
+  useEffect(() => {
+    if (!user) return;
+    setAvatarUrl(localStorage.getItem(`tki-avatar-${user.id}`));
+    const handler = () => setAvatarUrl(localStorage.getItem(`tki-avatar-${user.id}`));
+    window.addEventListener('avatar-changed', handler);
+    return () => window.removeEventListener('avatar-changed', handler);
+  }, [user?.id]);
+
+  const q = search.toLowerCase();
+  const productResults = search.length > 1
     ? allProducts.filter(p =>
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.author.toLowerCase().includes(search.toLowerCase())
-      ).slice(0, 6)
+        p.title.toLowerCase().includes(q) ||
+        (p.author ?? '').toLowerCase().includes(q)
+      ).slice(0, 5)
     : [];
+
+  const storeResults = search.length > 1
+    ? allProducts
+        .filter(p => p.sellerId && p.sellerName &&
+          (p.sellerName.toLowerCase().includes(q) || p.sellerId.toLowerCase().includes(q)))
+        .reduce((acc, p) => {
+          if (!acc.find(s => s.id === p.sellerId)) acc.push({ id: p.sellerId!, name: p.sellerName! });
+          return acc;
+        }, [] as { id: string; name: string }[])
+        .slice(0, 2)
+    : [];
+
+  const hasResults = productResults.length > 0 || storeResults.length > 0;
 
   return (
     <header className="sticky top-0 z-40 bg-[#0D0D0F]/85 backdrop-blur-xl border-b border-white/[0.05] flex flex-col">
@@ -59,24 +82,47 @@ export default function TopBar() {
         </kbd>
 
         {/* Search dropdown */}
-        {showSearch && results.length > 0 && (
+        {showSearch && hasResults && (
           <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[#141416] border border-white/[0.09] rounded-[14px] shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden z-50">
-            {results.map(p => (
-              <Link key={p.id} href={`/products/${p.id}`} onClick={() => setSearch('')}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition-colors">
-                <div className="w-8 h-10 rounded-[6px] overflow-hidden shrink-0 border border-white/[0.07]"
-                  style={{ background: `${p.color}AA` }}>
-                  {(p.coverImage || p.cover) && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={(p.coverImage || p.cover)!} alt="" className="w-full h-full object-cover" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] text-white/80 font-medium truncate">{p.title}</p>
-                  <p className="text-[11px] text-white/35 truncate">{p.author} · {p.genre}</p>
-                </div>
-              </Link>
-            ))}
+            {storeResults.length > 0 && (
+              <>
+                <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-white/25 uppercase tracking-widest">Toko</p>
+                {storeResults.map(s => (
+                  <Link key={s.id} href={`/toko/${s.id}`} onClick={() => setSearch('')}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-[#D90429] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {s.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-white/80 font-medium truncate">{s.name}</p>
+                      <p className="text-[11px] text-white/35">Toko Komik</p>
+                    </div>
+                  </Link>
+                ))}
+              </>
+            )}
+            {productResults.length > 0 && (
+              <>
+                {storeResults.length > 0 && <div className="border-t border-white/[0.06] mx-4" />}
+                {storeResults.length > 0 && <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-white/25 uppercase tracking-widest">Produk</p>}
+                {productResults.map(p => (
+                  <Link key={p.id} href={`/products/${p.id}`} onClick={() => setSearch('')}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition-colors">
+                    <div className="w-8 h-10 rounded-[6px] overflow-hidden shrink-0 border border-white/[0.07]"
+                      style={{ background: `${p.color}AA` }}>
+                      {(p.coverImage || p.cover) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={(p.coverImage || p.cover)!} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-white/80 font-medium truncate">{p.title}</p>
+                      <p className="text-[11px] text-white/35 truncate">{p.author ?? ''} · {p.genre}</p>
+                    </div>
+                  </Link>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -97,12 +143,6 @@ export default function TopBar() {
 
       {/* ── Right actions ── */}
       <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
-        {/* Mobile search toggle */}
-        <button onClick={() => setShowSearch(v => !v)} className="sm:hidden w-9 h-9 flex items-center justify-center text-white/45 hover:text-white/80 transition-colors rounded-[10px] hover:bg-white/[0.05]">
-          <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
-          </svg>
-        </button>
 
         {/* Cart */}
         <Link href="/cart"
@@ -132,8 +172,11 @@ export default function TopBar() {
         {user ? (
           <div className="relative">
             <button onClick={() => setMenuOpen(v => !v)}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-red-600 flex items-center justify-center text-white text-[12px] font-bold border border-white/[0.12] hover:border-white/25 transition-colors">
-              {user.name.charAt(0).toUpperCase()}
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-red-600 flex items-center justify-center text-white text-[12px] font-bold border border-white/[0.12] hover:border-white/25 transition-colors overflow-hidden">
+              {avatarUrl
+                ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                : <span>{user.name.charAt(0).toUpperCase()}</span>
+              }
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-[calc(100%+8px)] w-48 bg-[#141416] border border-white/[0.09] rounded-[14px] shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden z-50 py-1">
@@ -161,51 +204,67 @@ export default function TopBar() {
             )}
           </div>
         ) : (
-          <Link href="/login"
-            className="bg-[#D90429] text-white text-[12px] font-semibold px-3.5 py-1.5 rounded-[9px] hover:bg-[#B0021F] active:scale-95 transition-all duration-150">
-            Masuk
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link href="/login"
+              className="bg-[#D90429] text-white text-[12px] font-semibold px-3 py-1.5 rounded-[9px] hover:bg-[#B0021F] active:scale-95 transition-all duration-150">
+              Masuk
+            </Link>
+            <Link href="/register"
+              className="border border-white/[0.12] text-white/55 text-[12px] font-semibold px-3 py-1.5 rounded-[9px] hover:border-white/25 hover:text-white/80 active:scale-95 transition-all duration-150">
+              Daftar
+            </Link>
+          </div>
         )}
       </div>
     </div>
 
-    {/* Mobile search bar — shown when search icon tapped */}
-    {showSearch && (
-      <div className="sm:hidden px-4 pb-3 relative">
-        <svg className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
-        </svg>
-        <input
-          type="text"
-          autoFocus
-          placeholder="Cari komik atau kreator..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onBlur={() => setTimeout(() => setShowSearch(false), 150)}
-          className="w-full bg-white/[0.05] border border-white/[0.08] rounded-[12px] pl-10 pr-4 py-2 text-[13px] text-white/70 placeholder-white/22 focus:outline-none focus:border-white/[0.18]"
-        />
-        {results.length > 0 && (
-          <div className="absolute top-[calc(100%+4px)] left-4 right-4 bg-[#141416] border border-white/[0.09] rounded-[14px] shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden z-50">
-            {results.map(p => (
-              <Link key={p.id} href={`/products/${p.id}`} onClick={() => { setSearch(''); setShowSearch(false); }}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition-colors">
-                <div className="w-8 h-10 rounded-[6px] overflow-hidden shrink-0 border border-white/[0.07]"
-                  style={{ background: `${p.color}AA` }}>
-                  {(p.coverImage || p.cover) && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={(p.coverImage || p.cover)!} alt="" className="w-full h-full object-cover" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] text-white/80 font-medium truncate">{p.title}</p>
-                  <p className="text-[11px] text-white/35 truncate">{p.author} · {p.genre}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    )}
+    {/* Mobile search bar — always visible on mobile */}
+    <div className="sm:hidden px-4 pb-3 relative">
+      <svg className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
+      </svg>
+      <input
+        type="text"
+        placeholder="Cari komik atau kreator..."
+        value={search}
+        onChange={e => { setSearch(e.target.value); setShowSearch(true); }}
+        onFocus={() => setShowSearch(true)}
+        onBlur={() => setTimeout(() => setShowSearch(false), 150)}
+        className="w-full bg-white/[0.05] border border-white/[0.08] rounded-[12px] pl-10 pr-4 py-2 text-[13px] text-white/70 placeholder-white/22 focus:outline-none focus:border-white/[0.18]"
+      />
+      {showSearch && hasResults && (
+        <div className="absolute top-[calc(100%+4px)] left-4 right-4 bg-[#141416] border border-white/[0.09] rounded-[14px] shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden z-50">
+          {storeResults.map(s => (
+            <Link key={s.id} href={`/toko/${s.id}`} onClick={() => { setSearch(''); setShowSearch(false); }}
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition-colors">
+              <div className="w-8 h-8 rounded-full bg-[#D90429] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {s.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] text-white/80 font-medium truncate">{s.name}</p>
+                <p className="text-[11px] text-white/35">🏪 Toko</p>
+              </div>
+            </Link>
+          ))}
+          {productResults.map(p => (
+            <Link key={p.id} href={`/products/${p.id}`} onClick={() => { setSearch(''); setShowSearch(false); }}
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition-colors">
+              <div className="w-8 h-10 rounded-[6px] overflow-hidden shrink-0 border border-white/[0.07]"
+                style={{ background: `${p.color}AA` }}>
+                {(p.coverImage || p.cover) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={(p.coverImage || p.cover)!} alt="" className="w-full h-full object-cover" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] text-white/80 font-medium truncate">{p.title}</p>
+                <p className="text-[11px] text-white/35 truncate">{(p.author ?? '')} · {p.genre}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
     </header>
   );
 }

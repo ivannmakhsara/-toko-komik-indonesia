@@ -40,6 +40,7 @@ export default function ProductPage() {
     });
     const productReviews = getReviewsForProduct(comic.title);
     setReviews(productReviews);
+    setQty(comic.minBuy ?? 1);
   }, [comic]);
 
   if (!comic) {
@@ -167,8 +168,12 @@ export default function ProductPage() {
             {tab === 'detail' ? (
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-[130px_1fr] gap-y-3 text-white/50">
-                  <span className="text-white/30">Penulis</span>
-                  <span className="font-medium text-white/70">{comic.author}</span>
+                  {comic.author && (
+                    <>
+                      <span className="text-white/30">Penulis / Kreator</span>
+                      <span className="font-medium text-white/70">{comic.author}</span>
+                    </>
+                  )}
                   <span className="text-white/30">Genre</span>
                   <Link href={`/?genre=${comic.genre}`} className="text-[#D90429] hover:underline font-medium">
                     {comic.genre}
@@ -179,8 +184,16 @@ export default function ProductPage() {
                   <span>{comic.pages ?? '—'} halaman</span>
                   <span className="text-white/30">Kondisi</span>
                   <span>{comic.condition ?? 'Baru'}</span>
+                  <span className="text-white/30">Berat Satuan</span>
+                  <span>{comic.weight ?? 300} gram</span>
                   <span className="text-white/30">Min. Pembelian</span>
-                  <span>1 Eksemplar</span>
+                  <span>{comic.minBuy ?? 1} Eksemplar</span>
+                  {comic.preorderDays !== undefined && (
+                    <>
+                      <span className="text-white/30">Status</span>
+                      <span className="text-amber-400/80 font-medium">Preorder · {comic.preorderDays} hari kerja</span>
+                    </>
+                  )}
                 </div>
                 <div className="pt-3 border-t border-white/[0.05]">
                   <p className="text-white/45 leading-relaxed">{comic.description}</p>
@@ -310,7 +323,7 @@ export default function ProductPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setQty(q => Math.max(1, q - 1))}
+                    onClick={() => setQty(q => Math.max(comic.minBuy ?? 1, q - 1))}
                     className="w-8 h-8 border border-white/[0.10] rounded-lg flex items-center justify-center text-white/50 hover:border-[#D90429]/40 hover:text-white/80 transition-colors text-lg leading-none"
                   >−</button>
                   <span className="w-8 text-center text-sm font-semibold text-white/80">{qty}</span>
@@ -400,7 +413,7 @@ export default function ProductPage() {
       {/* ── Mobile sticky buy bar ── */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0E0E10]/95 backdrop-blur-xl border-t border-white/[0.08] px-4 py-3 flex items-center gap-2 z-40">
         <div className="flex items-center border border-white/[0.12] rounded-xl overflow-hidden shrink-0">
-          <button onClick={() => setQty(q => Math.max(1, q - 1))}
+          <button onClick={() => setQty(q => Math.max(comic.minBuy ?? 1, q - 1))}
             className="w-9 h-10 flex items-center justify-center text-white/50 hover:text-white/80 transition-colors text-xl font-light">
             −
           </button>

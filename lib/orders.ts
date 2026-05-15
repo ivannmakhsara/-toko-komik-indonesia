@@ -77,6 +77,16 @@ function mapRow(o: Record<string, unknown>): Order {
   };
 }
 
+function getStatusOverrides(): Record<string, OrderStatus> {
+  if (typeof window === 'undefined') return {};
+  try { return JSON.parse(localStorage.getItem('tki-status-overrides') || '{}'); } catch { return {}; }
+}
+
+function applyOverrides(orders: Order[]): Order[] {
+  const overrides = getStatusOverrides();
+  return orders.map(o => overrides[o.id] ? { ...o, status: overrides[o.id] } : o);
+}
+
 export async function getOrders(): Promise<Order[]> {
   const { data, error } = await supabase
     .from('orders')
@@ -87,10 +97,10 @@ export async function getOrders(): Promise<Order[]> {
     const sbOrders = data.map(o => mapRow(o as Record<string, unknown>));
     const local = getLocalOrders();
     const sbIds = new Set(sbOrders.map(o => o.id));
-    return [...sbOrders, ...local.filter(o => !sbIds.has(o.id))];
+    return applyOverrides([...sbOrders, ...local.filter(o => !sbIds.has(o.id))]);
   }
 
-  return getLocalOrders();
+  return applyOverrides(getLocalOrders());
 }
 
 export async function saveOrder(order: Order): Promise<void> {
@@ -132,13 +142,20 @@ export async function saveOrder(order: Order): Promise<void> {
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<void> {
+  /* Always cache locally so UI reflects change immediately regardless of RLS */
+  if (typeof window !== 'undefined') {
+    const overrides = getStatusOverrides();
+    overrides[orderId] = status;
+    localStorage.setItem('tki-status-overrides', JSON.stringify(overrides));
+  }
+
   const { error } = await supabase
     .from('orders')
     .update({ status })
     .eq('id', orderId);
 
   if (error) {
-    /* localStorage fallback */
+    /* Also update guest orders stored directly in localStorage */
     localStorage.setItem('all-orders', JSON.stringify(
       getLocalOrders().map(o => o.id === orderId ? { ...o, status } : o)
     ));
