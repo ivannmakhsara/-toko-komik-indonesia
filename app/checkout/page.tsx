@@ -74,8 +74,9 @@ export default function CheckoutPage() {
     setLoading(true);
     await new Promise(r => setTimeout(r, 1200));
 
+    const orderId = `ORD-${Date.now()}`;
     saveOrder({
-      id: `ORD-${Date.now()}`,
+      id: orderId,
       userId: user?.id ?? 'guest',
       date: new Date().toISOString(),
       items: items.map(({ comic, quantity }) => ({ title: comic.title, price: comic.price, quantity })),
@@ -95,9 +96,19 @@ export default function CheckoutPage() {
       status: 'Pesanan Masuk',
     });
     localStorage.setItem('user-profile', JSON.stringify({ name: form.name, email: form.email, phone: form.phone }));
+    localStorage.setItem('pending-payment', JSON.stringify({
+      orderId,
+      payment: form.payment,
+      total: grandTotal,
+      deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }));
 
     clearCart();
-    router.push('/checkout/success');
+    if (form.payment === 'cod') {
+      router.push('/checkout/success');
+    } else {
+      router.push('/checkout/payment');
+    }
   }
 
   const Field = ({ name, label, type = 'text', placeholder = '' }: { name: string; label: string; type?: string; placeholder?: string }) => (
