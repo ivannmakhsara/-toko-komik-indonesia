@@ -150,6 +150,30 @@ export function nextStatus(current: OrderStatus): OrderStatus | null {
   return idx >= 0 && idx < STATUS_STEPS.length - 1 ? STATUS_STEPS[idx + 1] : null;
 }
 
-export async function cancelOrder(orderId: string): Promise<void> {
+export async function cancelOrder(orderId: string, reason?: string): Promise<void> {
+  if (reason && typeof window !== 'undefined') {
+    const map = JSON.parse(localStorage.getItem('tki-cancel-reasons') || '{}');
+    map[orderId] = reason;
+    localStorage.setItem('tki-cancel-reasons', JSON.stringify(map));
+  }
   await updateOrderStatus(orderId, 'Dibatalkan');
+}
+
+export function getCancelReason(orderId: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const map = JSON.parse(localStorage.getItem('tki-cancel-reasons') || '{}');
+  return map[orderId] ?? null;
+}
+
+export function setTrackingNumber(orderId: string, tracking: string): void {
+  if (typeof window === 'undefined') return;
+  const map = JSON.parse(localStorage.getItem('tki-tracking') || '{}');
+  map[orderId] = tracking;
+  localStorage.setItem('tki-tracking', JSON.stringify(map));
+}
+
+export function getTrackingNumber(orderId: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const map = JSON.parse(localStorage.getItem('tki-tracking') || '{}');
+  return map[orderId] ?? null;
 }

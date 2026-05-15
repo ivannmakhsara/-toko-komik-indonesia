@@ -19,6 +19,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
 
+  if (pathname.startsWith('/seller')) return null;
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-[168px] bg-[#0D0D0F] border-r border-white/[0.05] flex-col z-40 hidden lg:flex">
 

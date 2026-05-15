@@ -92,9 +92,9 @@ export default function Footer() {
           <div className="max-w-xs">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 bg-[#D90429] rounded-[10px] flex items-center justify-center shrink-0">
-                <span className="font-display text-white font-bold text-sm tracking-tighter">KI</span>
+                <span className="font-display text-white font-bold text-[10px] tracking-tighter">TKI</span>
               </div>
-              <span className="font-display text-[#F2F2F0] font-semibold text-[15px] tracking-tight">Komik Indonesia</span>
+              <span className="font-display text-[#F2F2F0] font-semibold text-[15px] tracking-tight">Toko Komik Indonesia</span>
             </div>
             <p className="text-white/30 text-[13px] leading-relaxed mb-6">
               Platform marketplace komik lokal terlengkap. Dari koleksi klasik hingga karya generasi baru — semua ada di sini.
@@ -150,7 +150,7 @@ export default function Footer() {
         {/* ── Bottom bar ── */}
         <div className="border-t border-white/[0.06] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[12px] text-white/20">
-            © 2026 Komik Indonesia. Bangga produk lokal 🇮🇩
+            © 2026 Toko Komik Indonesia. Bangga produk lokal 🇮🇩
           </p>
           <div className="flex flex-wrap justify-center gap-5">
             {[

@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useSeller } from '@/context/SellerContext';
 import { useChat } from '@/context/ChatContext';
 import { getOrders } from '@/lib/orders';
+import { getReviewsForProduct, Review } from '@/lib/reviews';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,8 +21,9 @@ export default function ProductPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [lightbox,  setLightbox]  = useState<number | null>(null);
   const [tab,       setTab]       = useState<'detail' | 'preview'>('detail');
-  const [soldCount, setSoldCount] = useState(0);
+  const [soldCount,   setSoldCount]   = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
+  const [reviews,     setReviews]     = useState<Review[]>([]);
 
   const comic = allProducts.find(c => c.id === id);
 
@@ -36,6 +38,8 @@ export default function ProductPage() {
       setSoldCount(sold);
       setRatingCount(ratings);
     });
+    const productReviews = getReviewsForProduct(comic.title);
+    setReviews(productReviews);
   }, [comic]);
 
   if (!comic) {
@@ -206,34 +210,74 @@ export default function ProductPage() {
             {/* Reviews */}
             <div className="mt-8 border-t border-white/[0.06] pt-6">
               <h2 className="font-display font-semibold text-white/50 text-[11px] uppercase tracking-widest mb-4">Ulasan Pembeli</h2>
-              {ratingCount > 0 ? (
-                <div className="border border-white/[0.07] rounded-xl p-5 flex gap-8">
-                  <div className="text-center shrink-0">
-                    <p className="font-display text-4xl font-bold text-[#F2F2F0]">5.0</p>
-                    <div className="flex justify-center gap-0.5 my-1">
-                      {[1,2,3,4,5].map(s => <span key={s} className="text-yellow-400/70 text-xl">★</span>)}
-                    </div>
-                    <p className="text-xs text-white/25">/ 5.0</p>
-                    <p className="text-xs text-white/40 mt-1">100% puas</p>
-                    <p className="text-xs text-white/25">{ratingCount} rating</p>
-                  </div>
-                  <div className="flex-1 space-y-1.5">
-                    {[5,4,3,2,1].map(s => (
-                      <div key={s} className="flex items-center gap-2 text-xs">
-                        <span className="text-yellow-400/60 w-3">★</span>
-                        <span className="text-white/30 w-2">{s}</span>
-                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                          <div className="h-full rounded-full bg-green-500/60"
-                            style={{ width: s === 5 ? '100%' : '0%' }} />
+              {reviews.length > 0 ? (() => {
+                const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+                const counts = [5,4,3,2,1].map(s => ({ s, n: reviews.filter(r => r.rating === s).length }));
+                return (
+                  <div className="flex flex-col gap-4">
+                    {/* Summary */}
+                    <div className="border border-white/[0.07] rounded-xl p-5 flex gap-6">
+                      <div className="text-center shrink-0">
+                        <p className="font-display text-4xl font-bold text-[#F2F2F0]">{avg.toFixed(1)}</p>
+                        <div className="flex justify-center gap-0.5 my-1">
+                          {[1,2,3,4,5].map(s => (
+                            <span key={s} className={`text-lg ${s <= Math.round(avg) ? 'text-yellow-400/80' : 'text-white/15'}`}>★</span>
+                          ))}
                         </div>
-                        <span className="text-white/25 w-6 text-right">({s === 5 ? ratingCount : 0})</span>
+                        <p className="text-xs text-white/25">{reviews.length} ulasan</p>
                       </div>
-                    ))}
+                      <div className="flex-1 space-y-1.5">
+                        {counts.map(({ s, n }) => (
+                          <div key={s} className="flex items-center gap-2 text-xs">
+                            <span className="text-yellow-400/60 w-3">★</span>
+                            <span className="text-white/30 w-2">{s}</span>
+                            <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-yellow-400/50"
+                                style={{ width: reviews.length ? `${(n / reviews.length) * 100}%` : '0%' }} />
+                            </div>
+                            <span className="text-white/25 w-4 text-right">{n}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Individual reviews */}
+                    <div className="flex flex-col gap-3">
+                      {reviews.map(r => (
+                        <div key={r.id} className="border border-white/[0.07] rounded-xl p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-[#D90429]/20 border border-[#D90429]/20 flex items-center justify-center text-xs font-bold text-[#D90429]">
+                                {r.buyerName.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-sm font-medium text-white/70">{r.buyerName}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-0.5">
+                                {[1,2,3,4,5].map(s => (
+                                  <span key={s} className={`text-sm ${s <= r.rating ? 'text-yellow-400/80' : 'text-white/15'}`}>★</span>
+                                ))}
+                              </div>
+                              <span className="text-xs text-white/25">{new Date(r.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            </div>
+                          </div>
+                          {r.text && <p className="text-sm text-white/50 leading-relaxed mb-3">{r.text}</p>}
+                          {r.photos.length > 0 && (
+                            <div className="flex gap-2 flex-wrap">
+                              {r.photos.map((src, i) => (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img key={i} src={src} alt="" className="w-16 h-16 rounded-lg object-cover border border-white/[0.08]" />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : (
+                );
+              })() : (
                 <div className="border border-white/[0.07] rounded-xl p-6 flex items-center gap-5">
-                  <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center text-2xl">📦</div>
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center text-2xl">📝</div>
                   <div>
                     <p className="font-semibold text-white/60 mb-1">Belum ada ulasan</p>
                     <p className="text-sm text-white/30">Beli dan jadilah yang pertama memberikan ulasan</p>
