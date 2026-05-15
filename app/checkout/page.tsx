@@ -67,7 +67,7 @@ export default function CheckoutPage() {
     setErrors(prev => ({ ...prev, [e.target.name]: '' }));
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     const e2 = validate();
     if (Object.keys(e2).length > 0) { setErrors(e2); return; }
@@ -75,7 +75,7 @@ export default function CheckoutPage() {
     await new Promise(r => setTimeout(r, 1200));
 
     const orderId = `ORD-${Date.now()}`;
-    saveOrder({
+    await saveOrder({
       id: orderId,
       userId: user?.id ?? 'guest',
       date: new Date().toISOString(),

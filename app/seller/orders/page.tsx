@@ -9,13 +9,13 @@ export default function SellerOrdersPage() {
   const [filter, setFilter] = useState<'Semua' | OrderStatus>('Semua');
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useEffect(() => { setOrders(getOrders()); }, []);
+  useEffect(() => { getOrders().then(setOrders); }, []);
 
-  function advanceStatus(id: string, current: OrderStatus) {
+  async function advanceStatus(id: string, current: OrderStatus) {
     const next = nextStatus(current);
     if (!next) return;
-    updateOrderStatus(id, next);
-    setOrders(getOrders());
+    await updateOrderStatus(id, next);
+    getOrders().then(setOrders);
   }
 
   const filtered = filter === 'Semua' ? orders : orders.filter(o => o.status === filter);

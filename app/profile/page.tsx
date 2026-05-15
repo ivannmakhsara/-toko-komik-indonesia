@@ -14,8 +14,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      const all = getOrders();
-      setOrders(all.filter(o => o.userId === user.id || o.buyer.email === user.email));
+      getOrders().then(all =>
+        setOrders(all.filter(o => o.userId === user.id || o.buyer.email === user.email))
+      );
       setEditName(user.name);
     }
   }, [user]);
