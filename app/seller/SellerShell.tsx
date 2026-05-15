@@ -36,8 +36,9 @@ export default function SellerShell({ children }: { children: React.ReactNode })
   const { unreadForSeller } = useChat();
   const router = useRouter();
   const pathname = usePathname();
-  const [newOrders, setNewOrders] = useState(0);
-  const [collapsed, setCollapsed] = useState(false);
+  const [newOrders,    setNewOrders]    = useState(0);
+  const [collapsed,    setCollapsed]    = useState(false);
+  const [mobileOpen,   setMobileOpen]   = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
@@ -79,8 +80,19 @@ export default function SellerShell({ children }: { children: React.ReactNode })
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 z-10 flex bg-[#0A0A0B]">
 
+      {/* ── Mobile overlay backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-20 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className={`bg-[#0D0D0F] border-r border-white/[0.05] text-white flex flex-col shrink-0 transition-all duration-200 ${collapsed ? 'w-14' : 'w-56'}`}>
+      <aside className={`bg-[#0D0D0F] border-r border-white/[0.05] text-white flex flex-col shrink-0 transition-all duration-200
+        fixed md:relative inset-y-0 left-0 z-30
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${collapsed ? 'w-14' : 'w-56'}`}>
 
         {/* Store info */}
         <div className={`border-b border-white/[0.05] ${collapsed ? 'px-2 py-4' : 'px-4 py-4'}`}>
@@ -126,6 +138,7 @@ export default function SellerShell({ children }: { children: React.ReactNode })
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setMobileOpen(false)}
                     title={collapsed ? item.label : undefined}
                     className={`flex items-center gap-2.5 px-2 py-2 rounded-[10px] text-sm transition-colors mb-0.5 ${
                       collapsed ? 'justify-center' : 'justify-between'
@@ -174,7 +187,28 @@ export default function SellerShell({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── Content ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-[#0D0D0F] border-b border-white/[0.05] shrink-0">
+          <button
+            onClick={() => setMobileOpen(v => !v)}
+            className="w-9 h-9 flex items-center justify-center text-white/50 hover:text-white/80 hover:bg-white/[0.06] rounded-[10px] transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[#D90429] rounded-[6px] flex items-center justify-center">
+              <svg viewBox="0 0 32 32" className="w-3.5 h-3.5" fill="white"><path d="M16 6C16 6 9 4 4 6v18c5-2 12 0 12 0s7-2 12 0V6c-5-2-12 0-12 0z"/></svg>
+            </div>
+            <span className="font-display font-bold text-white/80 text-[13px]">Dashboard Seller</span>
+          </div>
+          {hasActivity && (
+            <span className="ml-auto w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+          )}
+        </div>
 
         {/* Notification bar */}
         {hasActivity && (

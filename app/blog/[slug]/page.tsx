@@ -1,4 +1,7 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface Article {
@@ -217,14 +220,74 @@ const RELATED_META: Record<string, { title: string; era: string; icon: string }>
   'era-digital':         { title: 'Era Digital',          era: '2010-an+',   icon: '🚀' },
 };
 
-export function generateStaticParams() {
-  return Object.keys(ARTICLES).map(slug => ({ slug }));
+interface AdminPost {
+  slug: string; title: string; category: string; icon: string;
+  date: string; lead: string; body: string; published: boolean;
 }
 
-export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+function getAdminPost(slug: string): AdminPost | null {
+  try {
+    const posts: AdminPost[] = JSON.parse(localStorage.getItem('tki-admin-posts') || '[]');
+    return posts.find(p => p.slug === slug && p.published) ?? null;
+  } catch { return null; }
+}
+
+export default function BlogArticlePage() {
+  const params = useParams<{ slug: string }>();
+  const slug   = params?.slug ?? '';
+
+  const [adminPost, setAdminPost] = useState<AdminPost | null | 'loading'>('loading');
+
+  useEffect(() => {
+    setAdminPost(getAdminPost(slug));
+  }, [slug]);
+
+  if (adminPost === 'loading') return null;
+
+  // ── Admin post renderer ──
+  if (adminPost) {
+    return (
+      <div className="bg-[#0A0A0B] min-h-screen text-white">
+        <div className="bg-gradient-to-br from-[#D90429] to-[#7f0016] text-white">
+          <div className="max-w-3xl mx-auto px-4 py-12 md:py-16">
+            <div className="flex items-center gap-2 mb-4 text-white/60 text-sm">
+              <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
+              <span>›</span>
+              <Link href="/info/blog" className="hover:text-white transition-colors">Blog</Link>
+            </div>
+            <span className="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">{adminPost.category}</span>
+            <div className="text-5xl mt-4 mb-3">{adminPost.icon}</div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight mb-4">{adminPost.title}</h1>
+            <p className="text-white/60 text-sm">📅 {adminPost.date}</p>
+          </div>
+        </div>
+        <div className="max-w-3xl mx-auto px-4 py-10">
+          <p className="text-lg text-white/70 leading-relaxed mb-8 font-medium border-l-4 border-[#D90429] pl-5">{adminPost.lead}</p>
+          <div className="space-y-5">
+            {adminPost.body.split(/\n\n+/).filter(Boolean).map((para, i) => (
+              <p key={i} className="text-white/60 leading-relaxed">{para}</p>
+            ))}
+          </div>
+          <div className="mt-8">
+            <Link href="/" className="text-sm text-[#D90429] font-semibold hover:underline flex items-center gap-1.5">
+              ← Kembali ke Beranda
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const article = ARTICLES[slug];
-  if (!article) notFound();
+  if (!article) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-4xl">📭</p>
+        <p className="text-xl font-bold text-gray-700">Artikel tidak ditemukan</p>
+        <Link href="/" className="text-red-700 font-semibold hover:underline">← Beranda</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-full">

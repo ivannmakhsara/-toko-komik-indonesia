@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   getOrders, updateOrderStatus, cancelOrder,
   setTrackingNumber, getTrackingNumber,
+  resolveDispute, getDisputeReason,
   Order, OrderStatus, STATUS_ICON,
 } from '@/lib/orders';
 import { formatRupiah } from '@/lib/data';
@@ -17,6 +18,7 @@ const STATUS_COLOR: Record<string, string> = {
   'Sampai':        'bg-purple-400/10 text-purple-400 border border-purple-400/20',
   'Selesai':       'bg-green-400/10 text-green-400 border border-green-400/20',
   'Dibatalkan':    'bg-red-500/10 text-red-400 border border-red-500/20',
+  'Bermasalah':    'bg-amber-500/10 text-amber-400 border border-amber-500/20',
 };
 
 const NEXT_LABEL: Partial<Record<OrderStatus, string>> = {
@@ -88,11 +90,12 @@ export default function SellerOrdersPage() {
   const activeOrders = orders.filter(o => o.status !== 'Dibatalkan');
   const filtered     = filter === 'Semua' ? activeOrders : activeOrders.filter(o => o.status === filter);
   const countBy      = (s: OrderStatus) => activeOrders.filter(o => o.status === s).length;
+  const disputedCount = orders.filter(o => o.status === 'Bermasalah').length;
 
   return (
     <div className="p-6 lg:p-8 bg-[#0A0A0B] min-h-screen">
       <h1 className="font-display text-2xl font-bold text-[#F2F2F0] mb-1 tracking-tight">Daftar Pesanan</h1>
-      <p className="text-white/35 text-sm mb-6">{activeOrders.length} pesanan aktif</p>
+      <p className="text-white/35 text-sm mb-6">{activeOrders.length} pesanan aktif{disputedCount > 0 && <span className="ml-2 text-amber-400 font-semibold">· {disputedCount} bermasalah</span>}</p>
 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -106,6 +109,12 @@ export default function SellerOrdersPage() {
             {STATUS_ICON[s]} {s} ({countBy(s)})
           </button>
         ))}
+        {disputedCount > 0 && (
+          <button onClick={() => setFilter('Bermasalah')}
+            className={`px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${filter === 'Bermasalah' ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400' : 'bg-amber-500/[0.06] border border-amber-500/20 text-amber-400/60 hover:text-amber-400/80'}`}>
+            ⚠️ Bermasalah ({disputedCount})
+          </button>
+        )}
       </div>
 
       {/* Journey legend */}
@@ -228,12 +237,30 @@ export default function SellerOrdersPage() {
                       </div>
                     )}
 
+                    {/* Dispute banner */}
+                    {order.status === 'Bermasalah' && (() => {
+                      const reason = getDisputeReason(order.id);
+                      return (
+                        <div className="mb-4 px-4 py-3 bg-amber-500/[0.08] border border-amber-500/25 rounded-[12px]">
+                          <p className="text-amber-400 text-sm font-semibold mb-1">⚠️ Pembeli melaporkan masalah</p>
+                          {reason && <p className="text-amber-300/70 text-xs">Alasan: {reason}</p>}
+                          <p className="text-white/40 text-xs mt-1">Hubungi pembeli melalui Chat dan selesaikan masalah sebelum menyelesaikan pesanan.</p>
+                        </div>
+                      );
+                    })()}
+
                     {/* Actions */}
                     <div className="flex items-center gap-3 flex-wrap">
-                      {order.status !== 'Dibatalkan' && order.status !== 'Selesai' && NEXT_LABEL[order.status] && (
+                      {order.status !== 'Dibatalkan' && order.status !== 'Selesai' && order.status !== 'Bermasalah' && NEXT_LABEL[order.status] && (
                         <button onClick={() => advance(order)}
                           className="bg-[#D90429] text-white px-5 py-2 rounded-[10px] hover:bg-[#B0021F] transition-colors text-sm font-semibold">
                           {NEXT_LABEL[order.status]} →
+                        </button>
+                      )}
+                      {order.status === 'Bermasalah' && (
+                        <button onClick={async () => { await resolveDispute(order.id); reload(); }}
+                          className="bg-green-600 text-white px-5 py-2 rounded-[10px] hover:bg-green-500 transition-colors text-sm font-semibold">
+                          ✓ Tandai Selesai (Masalah Teratasi)
                         </button>
                       )}
                       {order.status === 'Selesai' && (

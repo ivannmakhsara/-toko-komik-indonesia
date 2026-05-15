@@ -31,7 +31,7 @@ const EMPTY: FormData = {
   title: '', author: '', genre: 'Aksi',
   price: 0, color: randomColor(), coverImage: undefined,
   previewImages: [], description: '', year: new Date().getFullYear(), pages: 0,
-  condition: 'Baru', weight: 300, minBuy: 1, preorderDays: undefined,
+  condition: 'Baru', weight: 300, minBuy: 1, preorderDays: undefined, stock: undefined,
 };
 
 export default function ProductForm({ initial = EMPTY, onSubmit, submitLabel }: Props) {
@@ -54,6 +54,7 @@ export default function ProductForm({ initial = EMPTY, onSubmit, submitLabel }: 
     if ((form.pages ?? 0) <= 0) e.pages = 'Jumlah halaman harus lebih dari 0';
     if ((form.weight ?? 0) <= 0) e.weight = 'Berat harus lebih dari 0';
     if ((form.minBuy ?? 1) < 1) e.minBuy = 'Min. beli minimal 1';
+    if (form.stock !== undefined && form.stock < 0) e.stock = 'Stok tidak boleh negatif';
     if (isPreorder && !form.preorderDays) e.preorderDays = 'Isi estimasi hari preorder';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -63,7 +64,9 @@ export default function ProductForm({ initial = EMPTY, onSubmit, submitLabel }: 
     const { name, value } = e.target;
     setForm(prev => ({
       ...prev,
-      [name]: ['price','year','pages','weight','minBuy','preorderDays'].includes(name) ? Number(value) : value,
+      [name]: ['price','year','pages','weight','minBuy','preorderDays','stock'].includes(name)
+        ? (value === '' ? undefined : Number(value))
+        : value,
     }));
     setErrors(prev => ({ ...prev, [name]: undefined }));
   }
@@ -170,6 +173,10 @@ export default function ProductForm({ initial = EMPTY, onSubmit, submitLabel }: 
               <Field label="Min. Pembelian (eksemplar)" error={errors.minBuy}>
                 <input type="number" name="minBuy" value={form.minBuy ?? 1} onChange={handleChange}
                   placeholder="1" min={1} className={inp(errors.minBuy)} />
+              </Field>
+              <Field label="Stok Tersedia" error={errors.stock}>
+                <input type="number" name="stock" value={form.stock ?? ''} onChange={handleChange}
+                  placeholder="Kosongkan jika tidak terbatas" min={0} className={inp(errors.stock)} />
               </Field>
             </div>
 
@@ -307,8 +314,8 @@ export default function ProductForm({ initial = EMPTY, onSubmit, submitLabel }: 
 }
 
 function inp(error?: string) {
-  return `w-full bg-white/[0.05] border rounded-[10px] px-3 py-2 text-sm text-white/70 placeholder-white/20 focus:outline-none focus:border-white/25 ${
-    error ? 'border-[#D90429]/60' : 'border-white/[0.10]'
+  return `w-full bg-[#1a1a1c] border rounded-[10px] px-3 py-2 text-sm text-white/80 placeholder-white/25 focus:outline-none focus:border-white/30 [color-scheme:dark] ${
+    error ? 'border-[#D90429]/60' : 'border-white/[0.12]'
   }`;
 }
 

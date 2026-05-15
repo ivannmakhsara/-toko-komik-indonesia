@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import {
   getOrders, cancelOrder, updateOrderStatus, getCancelReason,
+  reportDispute, getDisputeReason,
   Order, OrderItem, STATUS_STEPS, STATUS_ICON, OrderStatus,
 } from '@/lib/orders';
 import { saveReview } from '@/lib/reviews';
@@ -57,19 +58,23 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-function OrderCard({ order, onCancelClick, onConfirmReceived, onWriteReview, reviewedKeys }: {
+function OrderCard({ order, onCancelClick, onConfirmReceived, onWriteReview, onDisputeClick, reviewedKeys }: {
   order: Order;
   onCancelClick: (id: string) => void;
   onConfirmReceived: (id: string) => void;
   onWriteReview: (orderId: string, item: OrderItem) => void;
+  onDisputeClick: (id: string) => void;
   reviewedKeys: Set<string>;
 }) {
-  const cancelled  = order.status === 'Dibatalkan';
-  const stepIdx    = STATUS_STEPS.indexOf(order.status as OrderStatus);
-  const canCancel  = order.status === 'Pesanan Masuk' || order.status === 'Diproses';
-  const canConfirm = order.status === 'Dikirim';
-  const isSelesai  = order.status === 'Selesai';
+  const cancelled    = order.status === 'Dibatalkan';
+  const disputed     = order.status === 'Bermasalah';
+  const stepIdx      = STATUS_STEPS.indexOf(order.status as OrderStatus);
+  const canCancel    = order.status === 'Pesanan Masuk' || order.status === 'Diproses';
+  const canConfirm   = order.status === 'Dikirim';
+  const isSelesai    = order.status === 'Selesai';
+  const canDispute   = order.status === 'Sampai' || order.status === 'Selesai';
   const cancelReason = getCancelReason(order.id);
+  const disputeReason = getDisputeReason(order.id);
 
   return (
     <div className="border border-white/[0.07] rounded-[16px] p-5 bg-white/[0.02]">
@@ -93,6 +98,12 @@ function OrderCard({ order, onCancelClick, onConfirmReceived, onWriteReview, rev
             <button onClick={() => onConfirmReceived(order.id)}
               className="text-xs px-3 py-1 rounded-full font-semibold border border-green-500/30 text-green-400/70 hover:bg-green-500/10 hover:text-green-400 hover:border-green-500/50 transition-colors">
               Konfirmasi Diterima
+            </button>
+          )}
+          {canDispute && !disputed && (
+            <button onClick={() => onDisputeClick(order.id)}
+              className="text-xs px-3 py-1 rounded-full font-semibold border border-amber-500/30 text-amber-400/70 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/50 transition-colors">
+              Laporkan Masalah
             </button>
           )}
         </div>
@@ -127,6 +138,14 @@ function OrderCard({ order, onCancelClick, onConfirmReceived, onWriteReview, rev
       {cancelled && cancelReason && (
         <div className="mb-3 px-3 py-2 bg-red-500/[0.06] border border-red-500/20 rounded-[10px]">
           <p className="text-xs text-red-400/70">Alasan: <span className="font-medium">{cancelReason}</span></p>
+        </div>
+      )}
+
+      {/* Dispute banner */}
+      {disputed && (
+        <div className="mb-3 px-3 py-2 bg-amber-500/[0.06] border border-amber-500/20 rounded-[10px]">
+          <p className="text-xs text-amber-400 font-semibold">⚠️ Masalah dilaporkan — seller sedang meninjau</p>
+          {disputeReason && <p className="text-xs text-amber-300/60 mt-0.5">Alasan: {disputeReason}</p>}
         </div>
       )}
 
@@ -165,7 +184,7 @@ function OrderCard({ order, onCancelClick, onConfirmReceived, onWriteReview, rev
 }
 
 function ProfileContent() {
-  const { user, loading, upgradeToSeller } = useAuth();
+  const { user, loading, upgradeToSeller, deleteAccount } = useAuth();
   const { addToCart } = useCart();
   const { wishlist, removeFromWishlist } = useWishlist();
   const [upgrading, setUpgrading] = useState(false);
@@ -181,6 +200,12 @@ function ProfileContent() {
   const [cancelReason,     setCancelReason]     = useState('');
   const [cancelReasonText, setCancelReasonText] = useState('');
   const [cancelling,       setCancelling]       = useState(false);
+
+  // Dispute modal state
+  const [disputeModal,     setDisputeModal]     = useState<string | null>(null);
+  const [disputeReason,    setDisputeReason]    = useState('');
+  const [disputeText,      setDisputeText]      = useState('');
+  const [submittingDispute, setSubmittingDispute] = useState(false);
 
   // Review modal state
   const [reviewModal,      setReviewModal]      = useState<{ orderId: string; item: OrderItem } | null>(null);
@@ -263,6 +288,20 @@ function ProfileContent() {
     refreshOrders();
   }
 
+  // ── Dispute flow ──
+  async function handleSubmitDispute() {
+    if (!disputeModal) return;
+    const reason = disputeReason === 'Lainnya' ? disputeText.trim() : disputeReason;
+    if (!reason) { alert('Pilih atau tuliskan alasan masalah.'); return; }
+    setSubmittingDispute(true);
+    await reportDispute(disputeModal, reason);
+    setDisputeModal(null);
+    setDisputeReason('');
+    setDisputeText('');
+    setSubmittingDispute(false);
+    refreshOrders();
+  }
+
   // ── Review flow ──
   function openReviewModal(orderId: string, item: OrderItem) {
     setReviewModal({ orderId, item });
@@ -323,7 +362,13 @@ function ProfileContent() {
   const completedOrders  = orders.filter(o => o.status === 'Selesai');
   const cancelledOrders  = orders.filter(o => o.status === 'Dibatalkan');
 
-  const cardProps = { onCancelClick: openCancelModal, onConfirmReceived: handleConfirmReceived, onWriteReview: openReviewModal, reviewedKeys };
+  const cardProps = {
+    onCancelClick: openCancelModal,
+    onConfirmReceived: handleConfirmReceived,
+    onWriteReview: openReviewModal,
+    onDisputeClick: (id: string) => { setDisputeModal(id); setDisputeReason(''); setDisputeText(''); },
+    reviewedKeys,
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -420,6 +465,18 @@ function ProfileContent() {
               </Link>
             </div>
           )}
+
+          {/* Danger zone */}
+          <div className="mt-4 border-t border-white/[0.06] pt-4">
+            <button
+              onClick={async () => {
+                if (!confirm('Hapus akun permanen? Semua data lokal akan dihapus. Tindakan ini tidak bisa dibatalkan.')) return;
+                await deleteAccount();
+              }}
+              className="text-xs text-red-400/50 hover:text-red-400 transition-colors">
+              Hapus Akun
+            </button>
+          </div>
         </div>
 
         {/* ── Tab panel ── */}
@@ -605,6 +662,43 @@ function ProfileContent() {
               <button onClick={handleConfirmCancel} disabled={cancelling}
                 className="flex-1 bg-red-600 text-white py-2.5 rounded-[12px] text-sm font-semibold hover:bg-red-500 transition-colors disabled:opacity-50">
                 {cancelling ? 'Membatalkan...' : 'Batalkan Pesanan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Dispute modal ── */}
+      {disputeModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111113] border border-white/[0.10] rounded-[20px] p-6 w-full max-w-sm">
+            <h3 className="font-display font-bold text-[#F2F2F0] mb-1">Laporkan Masalah</h3>
+            <p className="text-xs text-white/35 mb-5">Pilih masalah yang kamu alami. Seller akan segera menindaklanjuti.</p>
+            <div className="flex flex-col gap-2 mb-4">
+              {['Barang tidak sesuai deskripsi', 'Barang rusak saat tiba', 'Barang tidak diterima', 'Salah kirim produk', 'Lainnya'].map(r => (
+                <button key={r} onClick={() => { setDisputeReason(r); if (r !== 'Lainnya') setDisputeText(''); }}
+                  className={`text-left px-4 py-2.5 rounded-[12px] text-sm font-medium border transition-all ${
+                    disputeReason === r
+                      ? 'border-amber-500/60 bg-amber-500/10 text-white/80'
+                      : 'border-white/[0.08] text-white/40 hover:border-white/[0.15] hover:text-white/60'
+                  }`}>
+                  {r}
+                </button>
+              ))}
+            </div>
+            {disputeReason === 'Lainnya' && (
+              <textarea value={disputeText} onChange={e => setDisputeText(e.target.value)}
+                placeholder="Deskripsikan masalahmu..." rows={3}
+                className="w-full bg-white/[0.05] border border-white/[0.10] rounded-[12px] px-4 py-3 text-sm text-white/70 placeholder-white/25 focus:outline-none focus:border-white/25 resize-none mb-4" />
+            )}
+            <div className="flex gap-3">
+              <button onClick={() => setDisputeModal(null)}
+                className="flex-1 border border-white/[0.10] text-white/50 py-2.5 rounded-[12px] text-sm hover:border-white/20 transition-colors">
+                Batal
+              </button>
+              <button onClick={handleSubmitDispute} disabled={submittingDispute || !disputeReason}
+                className="flex-1 bg-amber-600 text-white py-2.5 rounded-[12px] text-sm font-semibold hover:bg-amber-500 transition-colors disabled:opacity-50">
+                {submittingDispute ? 'Melaporkan...' : 'Laporkan'}
               </button>
             </div>
           </div>

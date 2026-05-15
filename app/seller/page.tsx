@@ -23,6 +23,7 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   'Sampai':        'bg-purple-500',
   'Selesai':       'bg-green-500',
   'Dibatalkan':    'bg-red-500',
+  'Bermasalah':    'bg-amber-500',
 };
 
 export default function SellerDashboard() {
@@ -54,7 +55,7 @@ export default function SellerDashboard() {
     } catch { setWishlistCount(0); }
   }, [sellerProducts]);
 
-  const totalRevenue   = orders.reduce((s, o) => s + o.total, 0);
+  const totalRevenue   = orders.filter(o => o.status === 'Selesai').reduce((s, o) => s + o.total, 0);
   const newOrders      = orders.filter(o => o.status === 'Pesanan Masuk').length;
   const readyToShip    = orders.filter(o => o.status === 'Diproses').length;
   const completed      = orders.filter(o => o.status === 'Selesai').length;
@@ -72,8 +73,9 @@ export default function SellerDashboard() {
     ALL_STATUSES.map(s => [s, orders.filter(o => o.status === s).length])
   ) as Record<OrderStatus, number>;
 
+  const completedOrders = orders.filter(o => o.status === 'Selesai');
   const byMonth: Record<string, Order[]> = {};
-  orders.forEach(o => {
+  completedOrders.forEach(o => {
     const k = new Date(o.date).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     if (!byMonth[k]) byMonth[k] = [];
     byMonth[k].push(o);
@@ -130,7 +132,7 @@ export default function SellerDashboard() {
                       {formatRupiah(totalRevenue)}
                     </p>
                     <p className="text-xs text-white/25 mt-0.5">
-                      {orders.length} pesanan · <span className="text-[#D90429]/60 group-hover:underline">lihat rincian</span>
+                      dari {completedOrders.length} pesanan selesai · <span className="text-[#D90429]/60 group-hover:underline">lihat rincian</span>
                     </p>
                   </button>
                 </div>

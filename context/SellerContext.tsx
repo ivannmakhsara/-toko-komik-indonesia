@@ -36,6 +36,7 @@ function mapRow(row: Record<string, unknown>): Comic {
     rating:      (row.rating      as number) ?? 5.0,
     pages:       (row.pages       as number) ?? 0,
     color:       '#ef4444',
+    stock:       (row.stock as number) ?? undefined,
   };
 }
 
@@ -91,6 +92,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
         description: product.description,
         condition:   product.condition,
         rating:      product.rating ?? 5.0,
+        stock:       product.stock ?? null,
       });
       if (!error) {
         const newProduct: Comic = { ...product, id, sellerId: sbUser.id, sellerName: user.name };
@@ -120,6 +122,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
         cover:       product.cover,
         description: product.description,
         condition:   product.condition,
+        stock:       product.stock ?? null,
       }).eq('id', id);
       setDbProducts(prev => prev.map(p =>
         p.id === id ? { ...product, id, sellerId: p.sellerId, sellerName: p.sellerName } : p

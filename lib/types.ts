@@ -14,6 +14,7 @@ export interface Comic {
   weight?: number;        // grams per unit, used for shipping calculation
   minBuy?: number;        // minimum purchase quantity
   preorderDays?: number;  // days to ship if preorder; undefined = not preorder
+  stock?: number;         // available units; undefined = unlimited
   rating?: number;
   cover?: string;
   sellerId?: string;

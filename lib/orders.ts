@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type OrderStatus = 'Pesanan Masuk' | 'Diproses' | 'Dikirim' | 'Sampai' | 'Selesai' | 'Dibatalkan';
+export type OrderStatus = 'Pesanan Masuk' | 'Diproses' | 'Dikirim' | 'Sampai' | 'Selesai' | 'Dibatalkan' | 'Bermasalah';
 
 export const STATUS_STEPS: OrderStatus[] = [
   'Pesanan Masuk', 'Diproses', 'Dikirim', 'Sampai', 'Selesai',
@@ -13,6 +13,7 @@ export const STATUS_ICON: Record<OrderStatus, string> = {
   'Sampai':        '📦',
   'Selesai':       '✅',
   'Dibatalkan':    '❌',
+  'Bermasalah':    '⚠️',
 };
 
 export interface OrderItem {
@@ -193,4 +194,23 @@ export function getTrackingNumber(orderId: string): string | null {
   if (typeof window === 'undefined') return null;
   const map = JSON.parse(localStorage.getItem('tki-tracking') || '{}');
   return map[orderId] ?? null;
+}
+
+export async function reportDispute(orderId: string, reason: string): Promise<void> {
+  if (typeof window !== 'undefined') {
+    const map = JSON.parse(localStorage.getItem('tki-dispute-reasons') || '{}');
+    map[orderId] = reason;
+    localStorage.setItem('tki-dispute-reasons', JSON.stringify(map));
+  }
+  await updateOrderStatus(orderId, 'Bermasalah');
+}
+
+export function getDisputeReason(orderId: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const map = JSON.parse(localStorage.getItem('tki-dispute-reasons') || '{}');
+  return map[orderId] ?? null;
+}
+
+export async function resolveDispute(orderId: string): Promise<void> {
+  await updateOrderStatus(orderId, 'Selesai');
 }

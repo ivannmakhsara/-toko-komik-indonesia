@@ -19,6 +19,7 @@ interface AuthCtx {
   loginWithGoogle:  (email: string, name: string, role?: 'buyer' | 'seller') => void;
   upgradeToSeller:  () => Promise<void>;
   logout:           () => Promise<void>;
+  deleteAccount:    () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -135,8 +136,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }
 
+  async function deleteAccount(): Promise<void> {
+    if (!user) return;
+    const keysToRemove = [
+      'toko-session', 'tki-wishlist', 'tki-status-overrides',
+      'tki-reviews', 'tki-tracking', 'tki-cancel-reasons',
+      'tki-dispute-reasons', 'all-orders', 'all-seller-products',
+      `tki-avatar-${user.id}`,
+    ];
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    await supabase.auth.signOut();
+    setUser(null);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, upgradeToSeller, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, upgradeToSeller, logout, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
