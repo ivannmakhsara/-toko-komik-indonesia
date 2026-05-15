@@ -9,47 +9,63 @@ export default function ComicCard({ comic }: { comic: Comic }) {
   const { addToCart } = useCart();
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <Link href={`/products/${comic.id}`}>
-        <div className="h-40 sm:h-52 overflow-hidden cursor-pointer relative">
+    <div className="bg-white rounded-xl overflow-hidden border border-gray-100 hover:shadow-md transition-shadow duration-200 flex flex-col group">
+
+      {/* ── Cover ── */}
+      <div className="relative h-40 sm:h-48 overflow-hidden shrink-0">
+        <Link href={`/products/${comic.id}`} className="block w-full h-full">
           {comic.coverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={comic.coverImage} alt={comic.title} className="w-full h-full object-cover" />
+            <img
+              src={comic.coverImage}
+              alt={comic.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
           ) : (
             <div
               className="w-full h-full flex flex-col items-center justify-center p-4"
-              style={{ background: `linear-gradient(135deg, ${comic.color}, ${comic.color}99)` }}
+              style={{ background: `linear-gradient(135deg, ${comic.color}, ${comic.color}88)` }}
             >
-              <span className="text-5xl mb-2">📖</span>
-              <p className="text-white text-center font-bold text-sm leading-tight">{comic.title}</p>
+              <span className="text-4xl mb-1.5">📖</span>
+              <p className="text-white text-center font-bold text-xs leading-tight line-clamp-2">{comic.title}</p>
             </div>
           )}
+        </Link>
+
+        {/* Genre badge */}
+        <span className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full pointer-events-none">
+          {comic.genre}
+        </span>
+
+        {/* Add to cart — always visible on mobile, hover on desktop */}
+        <button
+          onClick={e => { e.preventDefault(); e.stopPropagation(); addToCart(comic); }}
+          title="Tambah ke keranjang"
+          className="absolute bottom-2 right-2 w-8 h-8 bg-red-700 text-white rounded-full flex items-center justify-center text-xl leading-none shadow-lg
+            active:scale-90 transition-all duration-150
+            opacity-100 sm:opacity-0 sm:translate-y-1
+            sm:group-hover:opacity-100 sm:group-hover:translate-y-0"
+        >
+          +
+        </button>
+      </div>
+
+      {/* ── Info ── */}
+      <Link href={`/products/${comic.id}`} className="p-3 flex flex-col gap-1 flex-1">
+        <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug">{comic.title}</p>
+        <p className="text-[10px] text-gray-400 truncate">{comic.author}</p>
+
+        <div className="mt-auto pt-2 space-y-0.5">
+          <p className="text-sm font-bold text-red-700 leading-tight">{formatRupiah(comic.price)}</p>
+          <div className="flex items-center gap-1">
+            <span className="text-yellow-400 text-[10px] leading-none">⭐</span>
+            <span className="text-[10px] text-gray-400">5.0</span>
+            <span className="text-[10px] text-gray-300 mx-0.5">·</span>
+            <span className="text-[10px] text-gray-400">{comic.year}</span>
+          </div>
         </div>
       </Link>
 
-      <div className="p-4 flex flex-col flex-1">
-        <Link href={`/products/${comic.id}`}>
-          <h3 className="font-bold text-gray-800 hover:text-red-700 transition-colors line-clamp-1">{comic.title}</h3>
-        </Link>
-        <p className="text-sm text-gray-500 mt-0.5">{comic.author}</p>
-
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
-            {comic.genre}
-          </span>
-          <span className="text-xs text-gray-400">{comic.year}</span>
-        </div>
-
-        <div className="mt-auto pt-3 flex items-center justify-between">
-          <span className="font-bold text-red-700 text-sm">{formatRupiah(comic.price)}</span>
-          <button
-            onClick={() => addToCart(comic)}
-            className="bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-800 active:scale-95 transition-all font-medium"
-          >
-            + Keranjang
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
