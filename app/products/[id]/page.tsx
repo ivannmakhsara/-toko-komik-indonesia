@@ -27,22 +27,23 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (!comic) return;
-    const orders = getOrders();
-    let sold = 0; let ratings = 0;
-    orders.forEach(o => {
-      const item = o.items.find(i => i.title === comic.title);
-      if (item) { sold += item.quantity; if (o.status === 'Selesai') ratings++; }
+    getOrders().then(orders => {
+      let sold = 0; let ratings = 0;
+      orders.forEach(o => {
+        const item = o.items.find(i => i.title === comic.title);
+        if (item) { sold += item.quantity; if (o.status === 'Selesai') ratings++; }
+      });
+      setSoldCount(sold);
+      setRatingCount(ratings);
     });
-    setSoldCount(sold);
-    setRatingCount(ratings);
   }, [comic]);
 
   if (!comic) {
     return (
       <div className="text-center py-24">
         <p className="text-4xl mb-3">😕</p>
-        <p className="text-lg font-medium text-gray-600">Komik tidak ditemukan</p>
-        <Link href="/" className="mt-4 inline-block text-red-700 hover:underline">Kembali ke beranda</Link>
+        <p className="text-lg font-medium text-white/60">Komik tidak ditemukan</p>
+        <Link href="/" className="mt-4 inline-block text-[#D90429] hover:underline">Kembali ke beranda</Link>
       </div>
     );
   }
@@ -61,21 +62,21 @@ export default function ProductPage() {
   function handleBuyNow()    { addToCart(comic!); router.push('/checkout'); }
 
   return (
-    <div className="bg-gray-50 min-h-full">
+    <div className="bg-[#0A0A0B] min-h-full">
       <div className="max-w-6xl mx-auto px-4 py-6">
 
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-5 flex-wrap">
-          <Link href="/" className="hover:text-red-600 transition-colors">Beranda</Link>
+        <nav className="flex items-center gap-1.5 text-sm text-white/30 mb-5 flex-wrap">
+          <Link href="/" className="hover:text-white/60 transition-colors">Beranda</Link>
           <span>›</span>
-          <span className="hover:text-red-600 cursor-pointer transition-colors">{comic.genre}</span>
+          <span className="hover:text-white/60 cursor-pointer transition-colors">{comic.genre}</span>
           <span>›</span>
-          <span className="text-gray-600 truncate max-w-[200px]">{comic.title}</span>
+          <span className="text-white/50 truncate max-w-[200px]">{comic.title}</span>
           {comic.sellerId && (
             <>
               <span>›</span>
               <Link href={`/toko/${comic.sellerId}`}
-                className="text-red-600 hover:underline font-medium truncate max-w-[160px]">
+                className="text-[#D90429] hover:underline font-medium truncate max-w-[160px]">
                 🏪 {comic.sellerName}
               </Link>
             </>
@@ -128,30 +129,30 @@ export default function ProductPage() {
           </div>
 
           {/* ─ Center: info ─ */}
-          <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-6">
-            <h1 className="text-xl font-bold text-gray-800 mb-1.5">{comic.title}</h1>
+          <div className="flex-1 min-w-0 bg-[#111113] rounded-xl border border-white/[0.07] p-6">
+            <h1 className="font-display text-xl font-bold text-[#F2F2F0] mb-1.5 tracking-tight">{comic.title}</h1>
 
             {/* Sold + rating */}
-            <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
+            <div className="flex items-center gap-3 text-sm text-white/40 mb-3">
               {soldCount > 0 && <span>Terjual {soldCount}</span>}
               {soldCount > 0 && <span>·</span>}
               <span className="flex items-center gap-1">
-                <span className="text-yellow-400">⭐</span>
-                <span className="font-medium">5.0</span>
-                {ratingCount > 0 && <span className="text-gray-400">({ratingCount} rating)</span>}
+                <span className="text-yellow-400/70">★</span>
+                <span className="text-white/60 font-medium">5.0</span>
+                {ratingCount > 0 && <span className="text-white/30">({ratingCount} rating)</span>}
               </span>
             </div>
 
-            <p className="text-3xl font-bold text-gray-800 mb-5">{formatRupiah(comic.price)}</p>
+            <p className="font-display text-3xl font-bold text-[#F2F2F0] mb-5">{formatRupiah(comic.price)}</p>
 
             {/* Tabs */}
-            <div className="flex gap-5 border-b border-gray-100 mb-5">
+            <div className="flex gap-5 border-b border-white/[0.06] mb-5">
               {(['detail', ...(previews.length > 0 ? ['preview'] : [])] as ('detail'|'preview')[]).map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
                   className={`pb-2.5 text-sm font-semibold border-b-2 transition-colors ${
-                    tab === t ? 'border-red-600 text-red-700' : 'border-transparent text-gray-400 hover:text-gray-600'
+                    tab === t ? 'border-[#D90429] text-[#D90429]' : 'border-transparent text-white/30 hover:text-white/60'
                   }`}
                 >
                   {t === 'detail' ? 'Detail Produk' : 'Preview Halaman'}
@@ -161,24 +162,24 @@ export default function ProductPage() {
 
             {tab === 'detail' ? (
               <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-[130px_1fr] gap-y-2.5 text-gray-600">
-                  <span className="text-gray-400">Penulis</span>
-                  <span className="font-medium text-gray-700">{comic.author}</span>
-                  <span className="text-gray-400">Genre</span>
-                  <Link href={`/?genre=${comic.genre}`} className="text-red-600 hover:underline font-medium">
+                <div className="grid grid-cols-[130px_1fr] gap-y-3 text-white/50">
+                  <span className="text-white/30">Penulis</span>
+                  <span className="font-medium text-white/70">{comic.author}</span>
+                  <span className="text-white/30">Genre</span>
+                  <Link href={`/?genre=${comic.genre}`} className="text-[#D90429] hover:underline font-medium">
                     {comic.genre}
                   </Link>
-                  <span className="text-gray-400">Tahun Terbit</span>
+                  <span className="text-white/30">Tahun Terbit</span>
                   <span>{comic.year}</span>
-                  <span className="text-gray-400">Jumlah Halaman</span>
-                  <span>{comic.pages} halaman</span>
-                  <span className="text-gray-400">Kondisi</span>
-                  <span>Baru</span>
-                  <span className="text-gray-400">Min. Pembelian</span>
+                  <span className="text-white/30">Jumlah Halaman</span>
+                  <span>{comic.pages ?? '—'} halaman</span>
+                  <span className="text-white/30">Kondisi</span>
+                  <span>{comic.condition ?? 'Baru'}</span>
+                  <span className="text-white/30">Min. Pembelian</span>
                   <span>1 Eksemplar</span>
                 </div>
-                <div className="pt-3 border-t border-gray-50">
-                  <p className="text-gray-600 leading-relaxed">{comic.description}</p>
+                <div className="pt-3 border-t border-white/[0.05]">
+                  <p className="text-white/45 leading-relaxed">{comic.description}</p>
                 </div>
               </div>
             ) : (
@@ -203,39 +204,39 @@ export default function ProductPage() {
             )}
 
             {/* Reviews */}
-            <div className="mt-8 border-t border-gray-100 pt-6">
-              <h2 className="font-bold text-gray-700 text-sm uppercase tracking-wide mb-4">Ulasan Pembeli</h2>
+            <div className="mt-8 border-t border-white/[0.06] pt-6">
+              <h2 className="font-display font-semibold text-white/50 text-[11px] uppercase tracking-widest mb-4">Ulasan Pembeli</h2>
               {ratingCount > 0 ? (
-                <div className="border border-gray-100 rounded-xl p-5 flex gap-8">
+                <div className="border border-white/[0.07] rounded-xl p-5 flex gap-8">
                   <div className="text-center shrink-0">
-                    <p className="text-4xl font-bold text-gray-800">5.0</p>
+                    <p className="font-display text-4xl font-bold text-[#F2F2F0]">5.0</p>
                     <div className="flex justify-center gap-0.5 my-1">
-                      {[1,2,3,4,5].map(s => <span key={s} className="text-yellow-400 text-xl">★</span>)}
+                      {[1,2,3,4,5].map(s => <span key={s} className="text-yellow-400/70 text-xl">★</span>)}
                     </div>
-                    <p className="text-xs text-gray-400">/ 5.0</p>
-                    <p className="text-xs text-gray-500 mt-1">100% pembeli puas</p>
-                    <p className="text-xs text-gray-400">{ratingCount} rating</p>
+                    <p className="text-xs text-white/25">/ 5.0</p>
+                    <p className="text-xs text-white/40 mt-1">100% puas</p>
+                    <p className="text-xs text-white/25">{ratingCount} rating</p>
                   </div>
                   <div className="flex-1 space-y-1.5">
                     {[5,4,3,2,1].map(s => (
                       <div key={s} className="flex items-center gap-2 text-xs">
-                        <span className="text-yellow-400 w-3">★</span>
-                        <span className="text-gray-500 w-2">{s}</span>
-                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${s === 5 ? 'bg-green-500' : ''}`}
+                        <span className="text-yellow-400/60 w-3">★</span>
+                        <span className="text-white/30 w-2">{s}</span>
+                        <div className="flex-1 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full bg-green-500/60"
                             style={{ width: s === 5 ? '100%' : '0%' }} />
                         </div>
-                        <span className="text-gray-400 w-6 text-right">({s === 5 ? ratingCount : 0})</span>
+                        <span className="text-white/25 w-6 text-right">({s === 5 ? ratingCount : 0})</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="border border-gray-100 rounded-xl p-6 flex items-center gap-5">
-                  <span className="text-5xl">📦</span>
+                <div className="border border-white/[0.07] rounded-xl p-6 flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center text-2xl">📦</div>
                   <div>
-                    <p className="font-bold text-gray-800 mb-1">Belum ada ulasan untuk produk ini</p>
-                    <p className="text-sm text-gray-400">Beli produk ini dan jadilah yang pertama memberikan ulasan</p>
+                    <p className="font-semibold text-white/60 mb-1">Belum ada ulasan</p>
+                    <p className="text-sm text-white/30">Beli dan jadilah yang pertama memberikan ulasan</p>
                   </div>
                 </div>
               )}
@@ -244,21 +245,21 @@ export default function ProductPage() {
 
           {/* ─ Right: sticky purchase panel (desktop) ─ */}
           <div className="hidden lg:block w-60 shrink-0">
-            <div className="sticky top-4 bg-white border border-gray-200 rounded-xl p-5 space-y-4">
-              <p className="text-sm font-semibold text-gray-700">Atur jumlah dan catatan</p>
+            <div className="sticky top-[76px] bg-[#111113] border border-white/[0.07] rounded-xl p-5 space-y-4">
+              <p className="text-[13px] font-semibold text-white/60">Atur jumlah dan catatan</p>
 
               {/* Mini product */}
-              <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 shrink-0">
-                  {comic.coverImage ? (
+              <div className="flex items-center gap-3 pb-4 border-b border-white/[0.06]">
+                <div className="w-12 h-12 rounded-lg overflow-hidden border border-white/[0.07] shrink-0">
+                  {(comic.coverImage || comic.cover) ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={comic.coverImage} alt="" className="w-full h-full object-cover" />
+                    <img src={(comic.coverImage || comic.cover)!} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-xl"
-                      style={{ background: `${comic.color}33` }}>📖</div>
+                      style={{ background: `${comic.color}44` }}>📖</div>
                   )}
                 </div>
-                <p className="text-xs font-medium text-gray-700 line-clamp-2">{comic.title}</p>
+                <p className="text-[12px] font-medium text-white/70 line-clamp-2">{comic.title}</p>
               </div>
 
               {/* Qty + stock */}
@@ -266,49 +267,49 @@ export default function ProductPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setQty(q => Math.max(1, q - 1))}
-                    className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center text-gray-600 hover:border-red-400 transition-colors text-lg leading-none"
+                    className="w-8 h-8 border border-white/[0.10] rounded-lg flex items-center justify-center text-white/50 hover:border-[#D90429]/40 hover:text-white/80 transition-colors text-lg leading-none"
                   >−</button>
-                  <span className="w-8 text-center text-sm font-semibold">{qty}</span>
+                  <span className="w-8 text-center text-sm font-semibold text-white/80">{qty}</span>
                   <button
                     onClick={() => setQty(q => q + 1)}
-                    className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center text-gray-600 hover:border-red-400 transition-colors text-lg leading-none"
+                    className="w-8 h-8 border border-white/[0.10] rounded-lg flex items-center justify-center text-white/50 hover:border-[#D90429]/40 hover:text-white/80 transition-colors text-lg leading-none"
                   >+</button>
                 </div>
-                <span className="text-xs text-orange-500 font-semibold">Stok Tersedia</span>
+                <span className="text-[11px] text-green-400/70 font-semibold">Tersedia</span>
               </div>
 
               {/* Subtotal */}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Subtotal</span>
-                <span className="font-bold text-gray-800">{formatRupiah(comic.price * qty)}</span>
+                <span className="text-[13px] text-white/35">Subtotal</span>
+                <span className="font-display font-bold text-[#F2F2F0]">{formatRupiah(comic.price * qty)}</span>
               </div>
 
               {/* CTA buttons */}
               <div className="space-y-2">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-red-700 text-white py-2.5 rounded-xl hover:bg-red-800 transition-colors font-semibold text-sm"
+                  className="w-full bg-[#D90429] text-white py-2.5 rounded-[12px] hover:bg-[#B0021F] transition-colors font-semibold text-[13px]"
                 >
                   + Keranjang
                 </button>
                 <button
                   onClick={handleBuyNow}
-                  className="w-full border border-red-700 text-red-700 py-2.5 rounded-xl hover:bg-red-50 transition-colors font-semibold text-sm"
+                  className="w-full border border-white/[0.12] text-white/60 py-2.5 rounded-[12px] hover:border-white/25 hover:text-white/80 transition-colors font-semibold text-[13px]"
                 >
                   Beli Langsung
                 </button>
               </div>
 
               {/* Chat / Wishlist / Share */}
-              <div className="flex justify-around pt-3 border-t border-gray-100 text-xs text-gray-500">
+              <div className="flex justify-around pt-3 border-t border-white/[0.06] text-[11px] text-white/30">
                 <button onClick={() => openChat(true)}
-                  className="flex flex-col items-center gap-1 hover:text-red-600 transition-colors">
+                  className="flex flex-col items-center gap-1 hover:text-[#D90429]/70 transition-colors">
                   <span className="text-lg">💬</span>Chat
                 </button>
-                <button className="flex flex-col items-center gap-1 hover:text-red-600 transition-colors">
+                <button className="flex flex-col items-center gap-1 hover:text-[#D90429]/70 transition-colors">
                   <span className="text-lg">🤍</span>Wishlist
                 </button>
-                <button className="flex flex-col items-center gap-1 hover:text-red-600 transition-colors">
+                <button className="flex flex-col items-center gap-1 hover:text-[#D90429]/70 transition-colors">
                   <span className="text-lg">↗</span>Bagikan
                 </button>
               </div>
@@ -316,37 +317,34 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* ── Lainnya di toko ini ── */}
+        {/* ── Lainnya ── */}
         {moreProducts.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-[#111113] rounded-xl border border-white/[0.07] p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-bold text-gray-800 text-lg">Lainnya di toko ini</h2>
-              <Link href="/" className="text-red-600 text-sm hover:underline font-medium">
-                Lihat Semua
+              <h2 className="font-display font-bold text-[#F2F2F0] text-lg tracking-tight">Lainnya yang mungkin kamu suka</h2>
+              <Link href="/" className="text-[#D90429]/70 text-[13px] hover:text-[#D90429] font-medium transition-colors">
+                Lihat Semua →
               </Link>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
               {moreProducts.map(c => (
                 <Link key={c.id} href={`/products/${c.id}`}
-                  className="group rounded-xl overflow-hidden hover:shadow-md transition-all border border-gray-100 bg-gray-50">
+                  className="group rounded-[16px] overflow-hidden border border-white/[0.07] bg-white/[0.03] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 transition-all duration-200">
                   <div className="aspect-[3/4] overflow-hidden">
-                    {c.coverImage ? (
+                    {(c.coverImage || c.cover) ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.coverImage} alt={c.title}
+                      <img src={(c.coverImage || c.cover)!} alt={c.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-3xl"
-                        style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
+                      <div className="w-full h-full flex items-center justify-center text-2xl"
+                        style={{ background: `linear-gradient(135deg, ${c.color}AA, ${c.color})` }}>
                         📖
                       </div>
                     )}
                   </div>
                   <div className="p-2">
-                    <p className="text-xs font-medium text-gray-800 line-clamp-2 mb-1 leading-snug">{c.title}</p>
-                    <p className="text-xs font-bold text-red-700">{formatRupiah(c.price)}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-0.5">
-                      <span className="text-yellow-400">⭐</span> 5.0
-                    </p>
+                    <p className="text-[11px] font-medium text-white/70 line-clamp-2 mb-1 leading-snug">{c.title}</p>
+                    <p className="text-[11px] font-bold text-[#D90429]">{formatRupiah(c.price)}</p>
                   </div>
                 </Link>
               ))}
@@ -356,24 +354,24 @@ export default function ProductPage() {
       </div>
 
       {/* ── Mobile sticky buy bar ── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-2 z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden shrink-0">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0E0E10]/95 backdrop-blur-xl border-t border-white/[0.08] px-4 py-3 flex items-center gap-2 z-40">
+        <div className="flex items-center border border-white/[0.12] rounded-xl overflow-hidden shrink-0">
           <button onClick={() => setQty(q => Math.max(1, q - 1))}
-            className="w-9 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xl font-light">
+            className="w-9 h-10 flex items-center justify-center text-white/50 hover:text-white/80 transition-colors text-xl font-light">
             −
           </button>
-          <span className="w-8 text-center text-sm font-bold">{qty}</span>
+          <span className="w-8 text-center text-sm font-bold text-white/80">{qty}</span>
           <button onClick={() => setQty(q => q + 1)}
-            className="w-9 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xl font-light">
+            className="w-9 h-10 flex items-center justify-center text-white/50 hover:text-white/80 transition-colors text-xl font-light">
             +
           </button>
         </div>
         <button onClick={handleAddToCart}
-          className="flex-1 border border-red-700 text-red-700 font-bold py-2.5 rounded-xl hover:bg-red-50 transition-colors text-sm">
+          className="flex-1 border border-white/[0.14] text-white/60 font-bold py-2.5 rounded-xl hover:border-white/25 hover:text-white/80 transition-colors text-sm">
           + Keranjang
         </button>
         <button onClick={handleBuyNow}
-          className="flex-1 bg-red-700 text-white font-bold py-2.5 rounded-xl hover:bg-red-800 transition-colors text-sm">
+          className="flex-1 bg-[#D90429] text-white font-bold py-2.5 rounded-xl hover:bg-[#B0021F] transition-colors text-sm">
           Beli Sekarang
         </button>
       </div>

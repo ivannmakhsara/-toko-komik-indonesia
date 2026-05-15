@@ -6,68 +6,57 @@ import { useSeller } from '@/context/SellerContext';
 import { getOrders } from '@/lib/orders';
 import ComicCard from '@/components/ComicCard';
 
-const SLIDES = [
-  { bg: 'from-red-700 to-red-950',    tag: 'Koleksi Terlengkap',      title: ['Superhero', 'Lokal Indonesia'],   sub: 'Gundala, Sri Asih, Godam — dan ratusan judul lainnya', cta: 'Jelajahi Koleksi', icon: '⚡' },
-  { bg: 'from-amber-600 to-orange-800', tag: '🔥 Flash Sale',          title: ['Komik Klasik', 'Diskon Spesial'], sub: 'Edisi terbatas — stok sangat terbatas!',               cta: 'Lihat Flash Sale', icon: '🔥' },
-  { bg: 'from-indigo-700 to-indigo-950', tag: 'Komikus Muda Indonesia', title: ['Karya Segar', 'Generasi Baru'],  sub: 'Dukung kreator lokal, bangga produk Indonesia',         cta: 'Dukung Sekarang',  icon: '🎨' },
-];
-
 const GENRE_PILLS = [
   { label: 'Semua', icon: '📚' }, { label: 'Aksi', icon: '⚡' }, { label: 'Petualangan', icon: '🗺️' },
-  { label: 'Humor', icon: '😂' }, { label: 'Horor', icon: '👻' }, { label: 'Romantis', icon: '❤️' }, { label: 'Fantasi', icon: '🐉' },
+  { label: 'Humor', icon: '😄' }, { label: 'Horor', icon: '👻' }, { label: 'Romantis', icon: '❤️' },
+  { label: 'Fantasi', icon: '🐉' },
 ];
 
 const TOP_TOKO = [
-  { rank: 1, name: 'Warung Komik Nusantara', kota: 'Jakarta',    produk: 247, rating: 4.9, sold: 1842 },
-  { rank: 2, name: 'Toko Buku Pelangi',      kota: 'Bandung',    produk: 189, rating: 4.8, sold: 1203 },
-  { rank: 3, name: 'Galeri Komik Surabaya',  kota: 'Surabaya',   produk: 156, rating: 4.7, sold: 987  },
-  { rank: 4, name: 'Pojok Baca Yogya',       kota: 'Yogyakarta', produk: 134, rating: 4.6, sold: 743  },
-  { rank: 5, name: 'Komik Medan Store',      kota: 'Medan',      produk: 98,  rating: 4.5, sold: 512  },
+  { rank: 1, name: 'Warung Komik Nusantara', kota: 'Jakarta',    sold: 1842, rating: 4.9 },
+  { rank: 2, name: 'Toko Buku Pelangi',      kota: 'Bandung',    sold: 1203, rating: 4.8 },
+  { rank: 3, name: 'Galeri Komik Surabaya',  kota: 'Surabaya',   sold: 987,  rating: 4.7 },
+  { rank: 4, name: 'Pojok Baca Yogya',       kota: 'Yogyakarta', sold: 743,  rating: 4.6 },
+  { rank: 5, name: 'Komik Medan Store',      kota: 'Medan',      sold: 512,  rating: 4.5 },
 ];
 
 const HIGHLIGHTS = [
-  { era: '1950-an',    icon: '🌟', title: 'Era Keemasan',        desc: 'R.A. Kosasih melahirkan Sri Asih (1954), superheroine pertama Indonesia.',          light: 'bg-amber-50',  border: 'border-amber-200',  badge: 'bg-amber-100 text-amber-700',   slug: 'era-keemasan'        },
-  { era: '1960–70-an', icon: '⚡', title: 'Pahlawan Legendaris',  desc: 'Gundala, Wiro Sableng, Si Buta dari Goa Hantu mendominasi pasar.',                  light: 'bg-red-50',    border: 'border-red-200',    badge: 'bg-red-100 text-red-700',       slug: 'pahlawan-legendaris' },
-  { era: '2000-an',    icon: '🎭', title: 'Gelombang Baru',       desc: 'Benny & Mice dan Si Juki hadir dengan satire urban modern.',                         light: 'bg-blue-50',   border: 'border-blue-200',   badge: 'bg-blue-100 text-blue-700',     slug: 'gelombang-baru'      },
-  { era: '2010-an+',   icon: '🚀', title: 'Era Digital',          desc: 'Garudayana & Nusantara 2044 membawa komik Indonesia ke panggung global.',             light: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-700', slug: 'era-digital'         },
+  { era: '1950-an', icon: '🌟', title: 'Era Keemasan',       desc: 'R.A. Kosasih melahirkan Sri Asih (1954), superheroine pertama Indonesia.', color: '#78350f', slug: 'era-keemasan' },
+  { era: '1960–70', icon: '⚡', title: 'Pahlawan Legendaris', desc: 'Gundala, Wiro Sableng, Si Buta dari Goa Hantu mendominasi pasar.',         color: '#7f1d1d', slug: 'pahlawan-legendaris' },
+  { era: '2000-an', icon: '🎭', title: 'Gelombang Baru',      desc: 'Benny & Mice dan Si Juki hadir dengan satire urban modern.',                color: '#1e3a5f', slug: 'gelombang-baru' },
+  { era: '2010+',   icon: '🚀', title: 'Era Digital',         desc: 'Garudayana & Nusantara 2044 membawa komik Indonesia ke panggung global.',   color: '#1a1a2e', slug: 'era-digital' },
 ];
 
-const RANK_MEDAL = ['🥇', '🥈', '🥉'];
-const TABS = ['Untuk Kamu', 'Terbaru', 'Flash Sale'] as const;
+const TABS = ['Semua', 'Terbaru', 'Flash Sale'] as const;
 type Tab = typeof TABS[number];
+
+const RANK_MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function HomePage() {
   const { allProducts } = useSeller();
-  const [slide, setSlide]         = useState(0);
-  const [genre, setGenre]         = useState('Semua');
-  const [search, setSearch]       = useState('');
-  const [tab, setTab]             = useState<Tab>('Untuk Kamu');
-  const [chartTab, setChartTab]   = useState<'harian' | 'mingguan' | 'bulanan'>('mingguan');
-  const [orders, setOrders]       = useState<import('@/lib/orders').Order[]>([]);
-  const [showFilter, setShowFilter] = useState(false);
-  const [minPrice, setMinPrice]   = useState('');
-  const [maxPrice, setMaxPrice]   = useState('');
-  const [sortBy, setSortBy]       = useState<'relevan' | 'termurah' | 'termahal' | 'terbaru' | 'terlama' | 'az'>('relevan');
-  const [condition, setCondition] = useState<'semua' | 'baru' | 'bekas'>('semua');
 
-  useEffect(() => {
-    const t = setInterval(() => setSlide(s => (s + 1) % SLIDES.length), 4500);
-    return () => clearInterval(t);
-  }, []);
+  const [genre, setGenre]           = useState('Semua');
+  const [search, setSearch]         = useState('');
+  const [tab, setTab]               = useState<Tab>('Semua');
+  const [chartTab, setChartTab]     = useState<'harian' | 'mingguan' | 'bulanan'>('mingguan');
+  const [orders, setOrders]         = useState<import('@/lib/orders').Order[]>([]);
+  const [showFilter, setShowFilter] = useState(false);
+  const [minPrice, setMinPrice]     = useState('');
+  const [maxPrice, setMaxPrice]     = useState('');
+  const [sortBy, setSortBy]         = useState<'relevan' | 'termurah' | 'termahal' | 'terbaru' | 'terlama' | 'az'>('relevan');
+  const [condition, setCondition]   = useState<'semua' | 'baru' | 'bekas'>('semua');
 
   useEffect(() => { getOrders().then(setOrders); }, []);
 
   const chartData = useMemo(() => {
-    const now = Date.now();
-    const DAY = 86_400_000;
+    const now = Date.now(), DAY = 86_400_000;
     const aggregate = (maxAge: number) => {
       const map: Record<string, number> = {};
       orders
         .filter(o => now - new Date(o.date).getTime() <= maxAge)
         .forEach(o => o.items.forEach(item => { map[item.title] = (map[item.title] || 0) + item.quantity; }));
-      return Object.entries(map)
-        .sort((a, b) => b[1] - a[1]).slice(0, 6)
-        .map(([title, sold]) => ({ title, sold, color: allProducts.find(p => p.title === title)?.color ?? '#dc2626' }));
+      return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6)
+        .map(([title, sold]) => ({ title, sold, color: allProducts.find(p => p.title === title)?.color ?? '#D90429' }));
     };
     return { harian: aggregate(DAY), mingguan: aggregate(7 * DAY), bulanan: aggregate(30 * DAY) };
   }, [orders, allProducts]);
@@ -82,8 +71,8 @@ export default function HomePage() {
       c.title.toLowerCase().includes(search.toLowerCase()) ||
       c.author.toLowerCase().includes(search.toLowerCase())
     );
-    const min = minPrice ? Number(minPrice.replace(/\D/g, '')) : 0;
-    const max = maxPrice ? Number(maxPrice.replace(/\D/g, '')) : Infinity;
+    const min = minPrice ? Number(minPrice) : 0;
+    const max = maxPrice ? Number(maxPrice) : Infinity;
     if (min > 0) base = base.filter(c => c.price >= min);
     if (max < Infinity) base = base.filter(c => c.price <= max);
     if (condition !== 'semua') base = base.filter(c => (c.condition ?? 'baru').toLowerCase() === condition);
@@ -97,106 +86,187 @@ export default function HomePage() {
     return base;
   }, [allProducts, genre, search, tab, minPrice, maxPrice, sortBy, condition]);
 
-  const cur = SLIDES[slide];
+  const heroComics = allProducts.slice(0, 5);
+  const filterActive = !!(minPrice || maxPrice || condition !== 'semua' || sortBy !== 'relevan');
 
   return (
-    <div>
-      {/* ── Announcement Bar ── */}
-      <div className="bg-red-700 text-white text-xs text-center py-2 px-4 flex items-center justify-center gap-3">
-        <span>📦 Gratis Ongkir untuk pembelian pertama!</span>
-        <span className="hidden sm:inline text-red-400">|</span>
-        <span className="hidden sm:inline">💳 Banyak promo pembayaran menanti</span>
-        <a href="#produk" className="ml-2 underline font-bold hover:text-red-200">Belanja Sekarang →</a>
-      </div>
+    <div className="bg-[#0A0A0B] min-h-screen">
 
-      {/* ── Carousel ── */}
-      <div className={`bg-gradient-to-r ${cur.bg} text-white relative overflow-hidden transition-all duration-700`}>
-        <div className="absolute inset-0 opacity-5"
-          style={{ backgroundImage: 'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)', backgroundSize: '24px 24px' }} />
-        <div className="max-w-6xl mx-auto px-5 py-8 md:py-16 flex items-center justify-between relative z-10">
-          <div className="max-w-xl">
-            <p className="text-white/60 text-xs font-bold tracking-widest uppercase mb-2">{cur.tag}</p>
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold leading-tight mb-3">
-              {cur.title[0]}<br />{cur.title[1]}
+      {/* ══════════════════════════════════════════════
+          HERO
+      ══════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden min-h-[88vh] flex items-center">
+
+        {/* Background ambient glows */}
+        <div className="absolute inset-0 pointer-events-none select-none">
+          <div className="absolute top-0 right-1/4 w-[600px] h-[600px] rounded-full bg-[#D90429]/[0.07] blur-[130px]" />
+          <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] rounded-full bg-[#D90429]/[0.04] blur-[110px]" />
+          <div className="absolute top-1/2 left-0 w-[300px] h-[300px] rounded-full bg-white/[0.015] blur-[100px]" />
+        </div>
+
+        {/* Grain */}
+        <div className="absolute inset-0 opacity-[0.030] pointer-events-none"
+          style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")', backgroundSize: '220px 220px' }} />
+
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 w-full grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-12 lg:gap-8 items-center py-24 lg:py-16">
+
+          {/* Left — editorial text */}
+          <div className="z-10 order-2 lg:order-1">
+            {/* Label */}
+            <div className="inline-flex items-center gap-2 border border-[#D90429]/25 bg-[#D90429]/[0.08] text-[#D90429] text-[11px] font-semibold px-3.5 py-1.5 rounded-full mb-8 tracking-[0.12em] uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D90429] animate-pulse" />
+              Platform Komik Lokal #1 Indonesia
+            </div>
+
+            {/* Headline */}
+            <h1 className="font-display font-bold text-[clamp(48px,7vw,88px)] leading-[0.92] tracking-[-0.03em] text-[#F2F2F0] mb-6">
+              Superhero
+              <br />
+              <span className="text-[#D90429]">Indonesia</span>
+              <br />
+              Ada di Sini
             </h1>
-            <p className="text-white/75 text-sm sm:text-base mb-5 hidden sm:block">{cur.sub}</p>
-            <a href="#produk" className="inline-block bg-white text-gray-900 font-bold px-5 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-sm shadow-lg">
-              {cur.cta}
-            </a>
-          </div>
-          <div className="hidden md:block text-[9rem] opacity-15 select-none leading-none">{cur.icon}</div>
-        </div>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-          {SLIDES.map((_, i) => (
-            <button key={i} onClick={() => setSlide(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${i === slide ? 'bg-white w-6' : 'bg-white/40 w-2'}`} />
-          ))}
-        </div>
-      </div>
 
-      {/* ── Main Content ── */}
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+            <p className="text-white/45 text-[17px] leading-relaxed max-w-[440px] mb-10">
+              Temukan ratusan komik lokal — dari Gundala hingga Garudayana.
+              Dukung kreator Indonesia, bangga karya sendiri.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <a href="#produk"
+                className="font-display bg-[#D90429] text-white font-semibold text-[14px] px-7 py-3.5 rounded-[14px] hover:bg-[#B0021F] active:scale-[0.97] transition-all duration-150 shadow-[0_0_32px_rgba(217,4,41,0.30)]">
+                Jelajahi Koleksi
+              </a>
+              <a href="#produk"
+                className="text-white/50 font-medium text-[14px] flex items-center gap-2 hover:text-white/80 transition-colors group">
+                Flash Sale
+                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </a>
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center gap-8 mt-14 pt-10 border-t border-white/[0.07]">
+              {[['500+', 'Judul Komik'], ['120+', 'Kreator Lokal'], ['50rb+', 'Pembaca']].map(([num, label]) => (
+                <div key={label}>
+                  <p className="font-display text-2xl font-bold text-[#F2F2F0] leading-none">{num}</p>
+                  <p className="text-white/35 text-[11px] mt-1 tracking-wide">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — floating comic books */}
+          <div className="relative h-[340px] sm:h-[420px] lg:h-[560px] order-1 lg:order-2 flex items-center justify-center lg:justify-end">
+            {heroComics.length > 0 && (() => {
+              const configs = [
+                { cls: 'absolute left-[50%] top-[5%] w-[120px] h-[168px] sm:w-[150px] sm:h-[210px] rotate-[-8deg] z-10 shadow-[0_20px_60px_rgba(0,0,0,0.7)]', opacity: 0.6 },
+                { cls: 'absolute left-[35%] top-[12%] w-[130px] h-[182px] sm:w-[165px] sm:h-[231px] rotate-[-2deg] z-20 shadow-[0_24px_72px_rgba(0,0,0,0.75)]', opacity: 0.85 },
+                { cls: 'absolute left-[20%] sm:left-[22%] top-[8%] w-[140px] h-[196px] sm:w-[180px] sm:h-[252px] rotate-[4deg] z-30 shadow-[0_28px_80px_rgba(0,0,0,0.8)]', opacity: 1 },
+                { cls: 'absolute left-[5%] sm:left-[8%] top-[18%] w-[120px] h-[168px] sm:w-[145px] sm:h-[203px] rotate-[9deg] z-20 shadow-[0_20px_56px_rgba(0,0,0,0.7)]', opacity: 0.7 },
+                { cls: 'absolute right-0 bottom-[10%] w-[110px] h-[154px] sm:w-[135px] sm:h-[189px] rotate-[-5deg] z-10 shadow-[0_16px_48px_rgba(0,0,0,0.65)]', opacity: 0.55 },
+              ];
+              return configs.slice(0, heroComics.length).map((cfg, i) => {
+                const c = heroComics[i];
+                return (
+                  <Link key={c.id} href={`/products/${c.id}`}
+                    className={`${cfg.cls} rounded-[16px] overflow-hidden hover:scale-105 hover:z-40 transition-all duration-300`}
+                    style={{ opacity: cfg.opacity }}>
+                    {c.coverImage || c.cover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={(c.coverImage || c.cover)!} alt={c.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3"
+                        style={{ background: `linear-gradient(155deg, ${c.color}CC 0%, ${c.color} 60%, #060608 100%)` }}>
+                        <span className="text-2xl opacity-40">📖</span>
+                        <p className="text-white/80 font-display font-semibold text-[10px] text-center leading-tight line-clamp-2">{c.title}</p>
+                      </div>
+                    )}
+                  </Link>
+                );
+              });
+            })()}
+            {/* Ambient glow under books */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-[#D90429]/10 blur-[60px] rounded-full" />
+          </div>
+        </div>
+
+        {/* Bottom fade to content */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0A0A0B] to-transparent pointer-events-none" />
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          MAIN CONTENT
+      ══════════════════════════════════════════════ */}
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 pb-24 space-y-14" id="produk">
 
         {/* ── Genre Pills ── */}
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {GENRE_PILLS.map(g => (
             <button key={g.label} onClick={() => setGenre(g.label)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 text-sm font-medium whitespace-nowrap transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-[13px] font-medium whitespace-nowrap transition-all duration-150 shrink-0 ${
                 genre === g.label
-                  ? 'border-red-600 bg-red-50 text-red-700 shadow-sm'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:text-red-600'
+                  ? 'border-[#D90429]/40 bg-[#D90429]/10 text-[#D90429]'
+                  : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:text-white/80 hover:border-white/[0.14]'
               }`}>
-              <span className="text-base">{g.icon}</span>
+              <span className="text-[13px]">{g.icon}</span>
               {g.label}
             </button>
           ))}
-          {genre !== 'Semua' && (
-            <button onClick={() => setGenre('Semua')}
-              className="flex items-center gap-1 px-3 py-2.5 rounded-2xl border-2 border-dashed border-gray-300 text-xs text-gray-400 hover:text-gray-600 shrink-0">
-              Semua ✕
-            </button>
-          )}
         </div>
 
-        {/* ── 3-Column: Products (2/3) + Sidebar (1/3) ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="produk">
+        {/* ── Products + Sidebar ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
 
-          {/* Products */}
-          <div className="lg:col-span-2">
-            <div className="flex flex-col gap-3 mb-5">
-              {/* Row 1: Tabs + Search + Filter toggle */}
+          {/* Products column */}
+          <div>
+
+            {/* Toolbar */}
+            <div className="flex flex-col gap-3 mb-7">
+              {/* Row 1: Tabs + Search + Filter */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div className="flex bg-white border border-gray-200 rounded-xl p-1 shadow-sm w-fit">
+                {/* Tabs */}
+                <div className="flex bg-white/[0.05] border border-white/[0.07] rounded-[14px] p-1 w-fit">
                   {TABS.map(t => (
                     <button key={t} onClick={() => setTab(t)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                        tab === t ? 'bg-red-700 text-white shadow' : 'text-gray-500 hover:text-gray-800'
+                      className={`px-4 py-1.5 rounded-[10px] text-[13px] font-medium transition-all whitespace-nowrap ${
+                        tab === t
+                          ? 'bg-[#D90429] text-white shadow-sm'
+                          : 'text-white/40 hover:text-white/70'
                       }`}>
                       {t === 'Flash Sale' ? '🔥 Flash Sale' : t}
                     </button>
                   ))}
                 </div>
+
+                {/* Search + Filter */}
                 <div className="flex gap-2 flex-1">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
+                    </svg>
                     <input type="text" placeholder="Cari judul atau pengarang..." value={search}
                       onChange={e => setSearch(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-red-400 bg-white shadow-sm" />
+                      className="w-full bg-white/[0.05] border border-white/[0.08] rounded-[14px] pl-9 pr-9 py-2 text-[13px] text-white/80 placeholder-white/25 focus:outline-none focus:border-white/20 transition-colors" />
                     {search && (
                       <button onClick={() => setSearch('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors text-xs">✕</button>
                     )}
                   </div>
                   <button onClick={() => setShowFilter(f => !f)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all shrink-0 ${
-                      showFilter || minPrice || maxPrice || condition !== 'semua' || sortBy !== 'relevan'
-                        ? 'border-red-500 bg-red-50 text-red-700'
-                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-[14px] border text-[13px] font-medium transition-all shrink-0 ${
+                      showFilter || filterActive
+                        ? 'border-[#D90429]/40 bg-[#D90429]/10 text-[#D90429]'
+                        : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:text-white/70 hover:border-white/[0.14]'
                     }`}>
-                    <span>⚙️</span>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round"/>
+                    </svg>
                     <span className="hidden sm:inline">Filter</span>
-                    {(minPrice || maxPrice || condition !== 'semua' || sortBy !== 'relevan') && (
-                      <span className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                    {filterActive && (
+                      <span className="bg-[#D90429] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
                         {[minPrice||maxPrice?1:0, condition!=='semua'?1:0, sortBy!=='relevan'?1:0].reduce((a,b)=>a+b,0)}
                       </span>
                     )}
@@ -206,25 +276,28 @@ export default function HomePage() {
 
               {/* Row 2: Filter panel */}
               {showFilter && (
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-[#111113] border border-white/[0.08] rounded-[18px] p-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
                     {/* Price range */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-600 mb-2">💰 Rentang Harga</p>
-                      <div className="flex items-center gap-2">
+                      <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-3">Harga (Rp)</p>
+                      <div className="flex items-center gap-2 mb-2.5">
                         <input type="text" placeholder="Min" value={minPrice}
                           onChange={e => setMinPrice(e.target.value.replace(/\D/g, ''))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-red-400 min-w-0" />
-                        <span className="text-gray-400 text-xs shrink-0">–</span>
+                          className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-[10px] px-3 py-1.5 text-[12px] text-white/70 placeholder-white/20 focus:outline-none focus:border-white/20 min-w-0" />
+                        <span className="text-white/20 text-xs">–</span>
                         <input type="text" placeholder="Max" value={maxPrice}
                           onChange={e => setMaxPrice(e.target.value.replace(/\D/g, ''))}
-                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-red-400 min-w-0" />
+                          className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-[10px] px-3 py-1.5 text-[12px] text-white/70 placeholder-white/20 focus:outline-none focus:border-white/20 min-w-0" />
                       </div>
-                      <div className="flex gap-1.5 mt-2">
+                      <div className="flex gap-1.5">
                         {[['s/d 20rb','','20000'],['20–50rb','20000','50000'],['50rb+','50000','']].map(([label, mn, mx]) => (
                           <button key={label} onClick={() => { setMinPrice(mn); setMaxPrice(mx); }}
-                            className={`text-[10px] px-2 py-1 rounded-lg border transition-colors ${
-                              minPrice===mn && maxPrice===mx ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            className={`text-[10px] px-2.5 py-1 rounded-[8px] border transition-colors ${
+                              minPrice===mn && maxPrice===mx
+                                ? 'border-[#D90429]/40 bg-[#D90429]/10 text-[#D90429]'
+                                : 'border-white/[0.08] text-white/35 hover:border-white/20'
                             }`}>{label}</button>
                         ))}
                       </div>
@@ -232,15 +305,17 @@ export default function HomePage() {
 
                     {/* Sort */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-600 mb-2">↕️ Urutkan</p>
+                      <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-3">Urutkan</p>
                       <div className="flex flex-wrap gap-1.5">
                         {([
                           ['relevan','Relevan'], ['termurah','Termurah'], ['termahal','Termahal'],
                           ['terbaru','Terbaru'], ['terlama','Terlama'], ['az','A–Z'],
                         ] as [typeof sortBy, string][]).map(([val, label]) => (
                           <button key={val} onClick={() => setSortBy(val)}
-                            className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${
-                              sortBy===val ? 'border-red-500 bg-red-50 text-red-700 font-semibold' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            className={`text-[10px] px-2.5 py-1 rounded-[8px] border transition-colors ${
+                              sortBy===val
+                                ? 'border-[#D90429]/40 bg-[#D90429]/10 text-[#D90429] font-semibold'
+                                : 'border-white/[0.08] text-white/35 hover:border-white/20'
                             }`}>{label}</button>
                         ))}
                       </div>
@@ -248,63 +323,79 @@ export default function HomePage() {
 
                     {/* Condition */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-600 mb-2">📦 Kondisi</p>
-                      <div className="flex gap-1.5">
+                      <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-3">Kondisi</p>
+                      <div className="flex gap-1.5 mb-4">
                         {([['semua','Semua'],['baru','Baru'],['bekas','Bekas']] as [typeof condition, string][]).map(([val, label]) => (
                           <button key={val} onClick={() => setCondition(val)}
-                            className={`text-[10px] px-3 py-1.5 rounded-lg border transition-colors ${
-                              condition===val ? 'border-red-500 bg-red-50 text-red-700 font-semibold' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            className={`text-[11px] px-3.5 py-1.5 rounded-[10px] border transition-colors font-medium ${
+                              condition===val
+                                ? 'border-[#D90429]/40 bg-[#D90429]/10 text-[#D90429]'
+                                : 'border-white/[0.08] text-white/35 hover:border-white/20'
                             }`}>{label}</button>
                         ))}
                       </div>
                       <button onClick={() => { setMinPrice(''); setMaxPrice(''); setSortBy('relevan'); setCondition('semua'); }}
-                        className="mt-3 text-[10px] text-red-600 hover:underline">
-                        Reset semua filter
+                        className="text-[11px] text-[#D90429]/60 hover:text-[#D90429] transition-colors">
+                        Reset filter
                       </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Active filter chips */}
-              {(search || genre !== 'Semua' || minPrice || maxPrice || condition !== 'semua' || sortBy !== 'relevan') && (
-                <div className="flex flex-wrap gap-1.5 items-center">
-                  <span className="text-xs text-gray-500">{displayProducts.length} komik ditemukan</span>
-                  {search && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">"{search}" <button onClick={() => setSearch('')} className="hover:text-red-600">✕</button></span>}
-                  {genre !== 'Semua' && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">{genre} <button onClick={() => setGenre('Semua')} className="hover:text-red-600">✕</button></span>}
-                  {(minPrice || maxPrice) && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">Harga <button onClick={() => { setMinPrice(''); setMaxPrice(''); }} className="hover:text-red-600">✕</button></span>}
-                  {condition !== 'semua' && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">{condition} <button onClick={() => setCondition('semua')} className="hover:text-red-600">✕</button></span>}
-                  {sortBy !== 'relevan' && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">Urut: {sortBy} <button onClick={() => setSortBy('relevan')} className="hover:text-red-600">✕</button></span>}
+              {/* Active chips */}
+              {(search || genre !== 'Semua' || filterActive) && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-[12px] text-white/30">{displayProducts.length} hasil</span>
+                  {search && (
+                    <span className="bg-white/[0.06] border border-white/[0.08] text-white/50 text-[11px] px-3 py-1 rounded-full flex items-center gap-1.5">
+                      &ldquo;{search}&rdquo;
+                      <button onClick={() => setSearch('')} className="hover:text-white/80 transition-colors">✕</button>
+                    </span>
+                  )}
+                  {genre !== 'Semua' && (
+                    <span className="bg-white/[0.06] border border-white/[0.08] text-white/50 text-[11px] px-3 py-1 rounded-full flex items-center gap-1.5">
+                      {genre}
+                      <button onClick={() => setGenre('Semua')} className="hover:text-white/80 transition-colors">✕</button>
+                    </span>
+                  )}
+                  {(minPrice || maxPrice) && (
+                    <span className="bg-white/[0.06] border border-white/[0.08] text-white/50 text-[11px] px-3 py-1 rounded-full flex items-center gap-1.5">
+                      Harga
+                      <button onClick={() => { setMinPrice(''); setMaxPrice(''); }} className="hover:text-white/80 transition-colors">✕</button>
+                    </span>
+                  )}
                 </div>
               )}
             </div>
 
+            {/* Product Grid */}
             {displayProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {displayProducts.map(comic => <ComicCard key={comic.id} comic={comic} />)}
               </div>
             ) : (
-              <div className="text-center py-20 text-gray-400">
-                <p className="text-4xl mb-3">📭</p>
-                <p className="font-medium">Komik tidak ditemukan</p>
-                <p className="text-sm mt-1">Coba genre atau kata kunci lain</p>
+              <div className="flex flex-col items-center justify-center py-28 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center mb-5 text-3xl">📭</div>
+                <p className="font-display text-lg font-semibold text-white/60 mb-1">Tidak ada komik</p>
+                <p className="text-white/30 text-[13px]">Coba ubah filter atau kata kunci pencarian</p>
               </div>
             )}
           </div>
 
-          {/* Sidebar */}
-          <aside className="space-y-5">
-            <div className="sticky top-20 space-y-5">
+          {/* ── Sidebar ── */}
+          <aside>
+            <div className="sticky top-[76px] space-y-4">
 
-              {/* Chart Terlaris */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              {/* Chart terlaris */}
+              <div className="bg-[#111113] border border-white/[0.07] rounded-[20px] p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-gray-800 text-sm">📊 Chart Terlaris</h2>
-                  <div className="flex bg-gray-100 rounded-lg p-0.5">
-                    {(['harian', 'mingguan', 'bulanan'] as const).map(t => (
+                  <p className="font-display font-semibold text-[#F2F2F0] text-[14px]">Chart Terlaris</p>
+                  <div className="flex bg-white/[0.05] rounded-[10px] p-0.5">
+                    {(['harian','mingguan','bulanan'] as const).map(t => (
                       <button key={t} onClick={() => setChartTab(t)}
-                        className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-all ${
-                          chartTab === t ? 'bg-white shadow text-red-700' : 'text-gray-400'
+                        className={`px-2 py-1 rounded-[8px] text-[10px] font-semibold transition-all ${
+                          chartTab === t ? 'bg-[#D90429] text-white' : 'text-white/30 hover:text-white/60'
                         }`}>
                         {t === 'harian' ? 'Hari' : t === 'mingguan' ? 'Minggu' : 'Bulan'}
                       </button>
@@ -313,27 +404,26 @@ export default function HomePage() {
                 </div>
 
                 {activeChart.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-3xl mb-2">📊</p>
-                    <p className="text-sm text-gray-500">Belum ada data</p>
-                    <p className="text-xs text-gray-400 mt-1">Terisi setelah ada transaksi</p>
+                  <div className="py-8 text-center">
+                    <p className="text-2xl mb-2">📊</p>
+                    <p className="text-white/30 text-[12px]">Belum ada data</p>
+                    <p className="text-white/20 text-[11px] mt-0.5">Terisi setelah ada transaksi</p>
                   </div>
                 ) : (
                   <div className="space-y-3.5">
                     {activeChart.map((item, i) => (
                       <div key={item.title} className="flex items-center gap-2.5">
-                        <span className="w-5 text-center text-sm shrink-0">
-                          {i < 3 ? RANK_MEDAL[i] : <span className="text-xs font-bold text-gray-300">{i + 1}</span>}
+                        <span className="w-4 text-center text-[12px] shrink-0">
+                          {i < 3 ? RANK_MEDAL[i] : <span className="text-[10px] font-bold text-white/20">{i+1}</span>}
                         </span>
-                        <div className="w-1.5 h-6 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                        <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-800 truncate">{item.title}</p>
-                          <div className="bg-gray-100 rounded-full h-1 mt-1.5">
-                            <div className="h-1 rounded-full transition-all duration-700"
-                              style={{ width: `${(item.sold / maxSold) * 100}%`, backgroundColor: item.color }} />
+                          <p className="text-[11px] font-semibold text-white/80 truncate">{item.title}</p>
+                          <div className="bg-white/[0.05] rounded-full h-1 mt-1">
+                            <div className="h-1 rounded-full" style={{ width: `${(item.sold/maxSold)*100}%`, backgroundColor: item.color }} />
                           </div>
                         </div>
-                        <span className="text-[10px] font-bold text-gray-500 shrink-0">{item.sold}×</span>
+                        <span className="text-[9px] font-bold text-white/25 shrink-0">{item.sold}×</span>
                       </div>
                     ))}
                   </div>
@@ -341,32 +431,30 @@ export default function HomePage() {
               </div>
 
               {/* Top Toko */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-gray-800 text-sm">🏪 Top Toko Komik</h2>
-                </div>
-                <div className="space-y-2">
+              <div className="bg-[#111113] border border-white/[0.07] rounded-[20px] p-5">
+                <p className="font-display font-semibold text-[#F2F2F0] text-[14px] mb-4">Top Toko Komik</p>
+                <div className="space-y-1.5">
                   {TOP_TOKO.map(toko => (
                     <div key={toko.rank}
-                      className={`flex items-center gap-2.5 p-2.5 rounded-xl transition-colors ${
-                        toko.rank === 1 ? 'bg-amber-50 border border-amber-200' : 'hover:bg-gray-50'
+                      className={`flex items-center gap-2.5 p-2.5 rounded-[12px] transition-colors ${
+                        toko.rank === 1 ? 'bg-amber-400/[0.07] border border-amber-400/[0.12]' : 'hover:bg-white/[0.04]'
                       }`}>
-                      <span className="text-base w-6 text-center shrink-0">
-                        {toko.rank <= 3 ? RANK_MEDAL[toko.rank - 1] : <span className="text-xs font-bold text-gray-300">{toko.rank}</span>}
+                      <span className="text-[13px] w-5 text-center shrink-0">
+                        {toko.rank <= 3 ? RANK_MEDAL[toko.rank-1] : <span className="text-[9px] font-bold text-white/20">{toko.rank}</span>}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-gray-800 truncate">{toko.name}</p>
-                        <p className="text-[10px] text-gray-400">{toko.kota} · {toko.produk} produk</p>
+                        <p className="text-[11px] font-semibold text-white/75 truncate">{toko.name}</p>
+                        <p className="text-[9px] text-white/30">{toko.kota}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] font-bold text-amber-600">★ {toko.rating}</p>
-                        <p className="text-[9px] text-gray-400">{toko.sold.toLocaleString('id-ID')}×</p>
+                        <p className="text-[10px] font-bold text-amber-400/70">★ {toko.rating}</p>
+                        <p className="text-[9px] text-white/25">{toko.sold.toLocaleString('id-ID')}×</p>
                       </div>
                     </div>
                   ))}
                 </div>
                 <Link href="/register"
-                  className="mt-4 flex items-center justify-center gap-1 text-xs text-red-700 font-semibold hover:underline">
+                  className="mt-4 flex items-center justify-center gap-1 text-[12px] text-[#D90429]/60 hover:text-[#D90429] transition-colors font-medium">
                   Buka toko kamu →
                 </Link>
               </div>
@@ -375,41 +463,60 @@ export default function HomePage() {
           </aside>
         </div>
 
-        {/* ── Napak Tilas Komik Indonesia ── */}
+        {/* ══════════════════════════════════════════════
+            NAPAK TILAS SECTION
+        ══════════════════════════════════════════════ */}
         <section>
-          <div className="flex items-end justify-between mb-4">
+          {/* Header */}
+          <div className="flex items-end justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Napak Tilas Komik Indonesia</h2>
-              <p className="text-sm text-gray-500">Perjalanan komik lokal dari masa ke masa</p>
+              <p className="text-[#D90429] text-[11px] font-semibold tracking-[0.12em] uppercase mb-2">Sejarah &amp; Warisan</p>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#F2F2F0] tracking-tight leading-tight">
+                Napak Tilas Komik Indonesia
+              </h2>
             </div>
-            <Link href="/info/blog" className="text-sm text-red-700 font-semibold hover:underline">
-              Lihat Semua →
+            <Link href="/info/blog"
+              className="text-[13px] text-white/40 hover:text-white/70 transition-colors font-medium hidden sm:flex items-center gap-1 group">
+              Lihat Semua
+              <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </Link>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
             {HIGHLIGHTS.map(h => (
               <Link key={h.era} href={`/blog/${h.slug}`}
-                className={`${h.light} ${h.border} border rounded-xl p-5 block hover:shadow-md transition-shadow group`}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xl">{h.icon}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${h.badge}`}>{h.era}</span>
+                className="group relative rounded-[20px] overflow-hidden border border-white/[0.07] bg-[#111113] p-5 hover:border-white/[0.14] hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.4)] transition-all duration-300">
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: `radial-gradient(circle at 30% 30%, ${h.color}18 0%, transparent 70%)` }} />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xl">{h.icon}</span>
+                    <span className="text-[9px] font-bold text-white/30 tracking-widest uppercase border border-white/[0.08] px-2 py-0.5 rounded-full">
+                      {h.era}
+                    </span>
+                  </div>
+                  <p className="font-display font-bold text-[#F2F2F0] text-[14px] mb-2 leading-snug tracking-tight group-hover:text-white transition-colors">
+                    {h.title}
+                  </p>
+                  <p className="text-white/35 text-[12px] leading-relaxed line-clamp-3">{h.desc}</p>
+                  <p className="text-[#D90429]/60 group-hover:text-[#D90429] text-[11px] font-semibold mt-3 transition-colors">Baca →</p>
                 </div>
-                <p className="font-bold text-gray-800 text-sm mb-1.5 group-hover:text-red-700 transition-colors">{h.title}</p>
-                <p className="text-xs text-gray-600 leading-relaxed">{h.desc}</p>
-                <p className="text-xs text-red-600 font-semibold mt-3">Baca selengkapnya →</p>
               </Link>
             ))}
           </div>
-          <div className="bg-gray-800 text-white rounded-xl px-6 py-4 flex items-center gap-4">
-            <span className="text-2xl shrink-0">💡</span>
-            <p className="text-sm text-gray-300 leading-relaxed">
-              <span className="text-white font-semibold">Tahukah kamu?</span>{' '}
+
+          {/* Factoid bar */}
+          <div className="bg-[#111113] border border-white/[0.07] rounded-[18px] px-6 py-4 flex items-center gap-5">
+            <div className="w-10 h-10 bg-white/[0.04] rounded-[12px] flex items-center justify-center text-xl shrink-0">💡</div>
+            <p className="text-[13px] text-white/35 leading-relaxed">
+              <span className="text-white/70 font-semibold">Tahukah kamu?</span>{' '}
               Komik Indonesia memiliki sejarah lebih dari 70 tahun dengan ratusan karakter ikonik yang
-              mencerminkan keragaman budaya nusantara — dari superhero modern hingga pendekar silat legendaris.
+              mencerminkan keragaman budaya nusantara.
             </p>
           </div>
         </section>
-
       </div>
     </div>
   );
