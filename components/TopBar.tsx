@@ -6,7 +6,12 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useSeller } from '@/context/SellerContext';
 
-const NAV_LINKS = ['Beranda', 'Koleksi', 'Terbaru', 'Komunitas'];
+const NAV_LINKS = [
+  { label: 'Beranda',   href: '/' },
+  { label: 'Koleksi',   href: '/#konten' },
+  { label: 'Terbaru',   href: '/?sort=terbaru' },
+  { label: 'Komunitas', href: '/blog/era-keemasan' },
+];
 
 export default function TopBar() {
   const { totalItems } = useCart();
@@ -24,7 +29,8 @@ export default function TopBar() {
     : [];
 
   return (
-    <header className="sticky top-0 z-30 bg-[#0D0D0F]/85 backdrop-blur-xl border-b border-white/[0.05] h-[60px] flex items-center px-5 gap-4">
+    <header className="sticky top-0 z-40 bg-[#0D0D0F]/85 backdrop-blur-xl border-b border-white/[0.05] flex flex-col">
+    <div className="h-[60px] flex items-center px-5 gap-4">
 
       {/* Mobile logo */}
       <Link href="/" className="lg:hidden flex items-center gap-2 shrink-0">
@@ -77,10 +83,10 @@ export default function TopBar() {
 
       {/* ── Nav links — desktop ── */}
       <nav className="hidden xl:flex items-center gap-5 shrink-0">
-        {NAV_LINKS.map((label, i) => (
-          <Link key={label} href={i === 0 ? '/' : `/#`}
+        {NAV_LINKS.map(({ label, href }) => (
+          <Link key={label} href={href}
             className={`text-[13px] font-medium transition-colors whitespace-nowrap ${
-              i === 0
+              label === 'Beranda'
                 ? 'text-[#D90429] border-b border-[#D90429] pb-0.5'
                 : 'text-white/45 hover:text-white/80'
             }`}>
@@ -92,8 +98,8 @@ export default function TopBar() {
       {/* ── Right actions ── */}
       <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
         {/* Mobile search toggle */}
-        <button className="sm:hidden w-9 h-9 flex items-center justify-center text-white/45 hover:text-white/80 transition-colors rounded-[10px] hover:bg-white/[0.05]">
-          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <button onClick={() => setShowSearch(v => !v)} className="sm:hidden w-9 h-9 flex items-center justify-center text-white/45 hover:text-white/80 transition-colors rounded-[10px] hover:bg-white/[0.05]">
+          <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
           </svg>
         </button>
@@ -114,12 +120,13 @@ export default function TopBar() {
         </Link>
 
         {/* Bell */}
-        <button className="w-9 h-9 flex items-center justify-center text-white/45 hover:text-white/80 transition-colors rounded-[10px] hover:bg-white/[0.05]">
+        <Link href="/profile?tab=transaksi"
+          className="w-9 h-9 flex items-center justify-center text-white/45 hover:text-white/80 transition-colors rounded-[10px] hover:bg-white/[0.05]">
           <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        </button>
+        </Link>
 
         {/* Avatar / Login */}
         {user ? (
@@ -160,6 +167,45 @@ export default function TopBar() {
           </Link>
         )}
       </div>
+    </div>
+
+    {/* Mobile search bar — shown when search icon tapped */}
+    {showSearch && (
+      <div className="sm:hidden px-4 pb-3 relative">
+        <svg className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
+        </svg>
+        <input
+          type="text"
+          autoFocus
+          placeholder="Cari komik atau kreator..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onBlur={() => setTimeout(() => setShowSearch(false), 150)}
+          className="w-full bg-white/[0.05] border border-white/[0.08] rounded-[12px] pl-10 pr-4 py-2 text-[13px] text-white/70 placeholder-white/22 focus:outline-none focus:border-white/[0.18]"
+        />
+        {results.length > 0 && (
+          <div className="absolute top-[calc(100%+4px)] left-4 right-4 bg-[#141416] border border-white/[0.09] rounded-[14px] shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden z-50">
+            {results.map(p => (
+              <Link key={p.id} href={`/products/${p.id}`} onClick={() => { setSearch(''); setShowSearch(false); }}
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.05] transition-colors">
+                <div className="w-8 h-10 rounded-[6px] overflow-hidden shrink-0 border border-white/[0.07]"
+                  style={{ background: `${p.color}AA` }}>
+                  {(p.coverImage || p.cover) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={(p.coverImage || p.cover)!} alt="" className="w-full h-full object-cover" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] text-white/80 font-medium truncate">{p.title}</p>
+                  <p className="text-[11px] text-white/35 truncate">{p.author} · {p.genre}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
     </header>
   );
 }

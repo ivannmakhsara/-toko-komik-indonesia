@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { getOrders, cancelOrder, Order, STATUS_STEPS, STATUS_ICON, OrderStatus } from '@/lib/orders';
 import { formatRupiah } from '@/lib/data';
 
@@ -23,6 +25,7 @@ const statusColor: Record<string, string> = {
 const TABS = [
   { id: 'transaksi', label: 'Transaksi' },
   { id: 'koleksi',   label: 'Koleksi'   },
+  { id: 'wishlist',  label: 'Wishlist'  },
   { id: 'favorit',   label: 'Favorit'   },
 ];
 
@@ -103,6 +106,8 @@ function OrderCard({ order, onCancel, cancelling }: {
 
 function ProfileContent() {
   const { user, loading, upgradeToSeller } = useAuth();
+  const { addToCart } = useCart();
+  const { wishlist, removeFromWishlist } = useWishlist();
   const [upgrading,  setUpgrading]  = useState(false);
   const [orders,     setOrders]     = useState<Order[]>([]);
   const [editing,    setEditing]    = useState(false);
@@ -242,6 +247,9 @@ function ProfileContent() {
                 {t.id === 'koleksi' && koleksi.length > 0 && (
                   <span className="ml-1.5 text-[10px] bg-white/[0.08] text-white/35 px-1.5 py-0.5 rounded-full">{koleksi.length}</span>
                 )}
+                {t.id === 'wishlist' && wishlist.length > 0 && (
+                  <span className="ml-1.5 text-[10px] bg-white/[0.08] text-white/35 px-1.5 py-0.5 rounded-full">{wishlist.length}</span>
+                )}
               </button>
             ))}
           </div>
@@ -316,12 +324,60 @@ function ProfileContent() {
               )
             )}
 
-            {/* ── Favorit / Wishlist ── */}
+            {/* ── Wishlist ── */}
+            {tab === 'wishlist' && (
+              wishlist.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center text-2xl mx-auto mb-3">🔖</div>
+                  <p className="text-sm text-white/35 mb-1">Wishlist kamu kosong</p>
+                  <p className="text-xs text-white/20 mb-4">Simpan komik yang ingin kamu beli nanti dengan ikon ♡ di kartu produk.</p>
+                  <Link href="/" className="bg-[#D90429] text-white px-5 py-2 rounded-[12px] hover:bg-[#B0021F] transition-colors text-sm font-semibold">
+                    Jelajahi Komik
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {wishlist.map(comic => (
+                    <div key={comic.id} className="flex items-center gap-4 p-3 bg-white/[0.02] border border-white/[0.07] rounded-[14px]">
+                      <Link href={`/products/${comic.id}`}
+                        className="w-12 h-16 rounded-[8px] overflow-hidden shrink-0 border border-white/[0.07]"
+                        style={{ background: `linear-gradient(135deg, ${comic.color}BB, ${comic.color})` }}>
+                        {(comic.coverImage || comic.cover) && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={(comic.coverImage || comic.cover)!} alt={comic.title} className="w-full h-full object-cover" />
+                        )}
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/products/${comic.id}`}>
+                          <p className="text-[13px] font-semibold text-white/80 truncate hover:text-white transition-colors">{comic.title}</p>
+                        </Link>
+                        <p className="text-[11px] text-white/35 truncate">{comic.author} · {comic.genre}</p>
+                        <p className="text-[13px] font-bold text-[#D90429] mt-1">{formatRupiah(comic.price)}</p>
+                      </div>
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <button
+                          onClick={() => addToCart(comic)}
+                          className="text-[11px] font-semibold px-3 py-1.5 bg-[#D90429] text-white rounded-[9px] hover:bg-[#B0021F] transition-colors whitespace-nowrap">
+                          + Keranjang
+                        </button>
+                        <button
+                          onClick={() => removeFromWishlist(comic.id)}
+                          className="text-[11px] text-white/30 hover:text-red-400 transition-colors text-center">
+                          Hapus
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {/* ── Favorit ── */}
             {tab === 'favorit' && (
               <div className="text-center py-10">
                 <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center text-2xl mx-auto mb-3">❤️</div>
-                <p className="text-sm text-white/35 mb-1">Favorit kamu kosong</p>
-                <p className="text-xs text-white/20 mb-4">Tap ikon hati di halaman komik untuk menyimpannya di sini.</p>
+                <p className="text-sm text-white/35 mb-1">Fitur favorit segera hadir</p>
+                <p className="text-xs text-white/20 mb-4">Beri rating komik yang sudah kamu beli untuk menyimpannya di sini.</p>
                 <Link href="/" className="bg-[#D90429] text-white px-5 py-2 rounded-[12px] hover:bg-[#B0021F] transition-colors text-sm font-semibold">
                   Jelajahi Komik
                 </Link>

@@ -87,9 +87,9 @@ export default function ProductPage() {
         <div className="flex flex-col lg:flex-row gap-5 mb-10 pb-20 lg:pb-0">
 
           {/* ─ Gallery ─ */}
-          <div className="w-full lg:w-72 shrink-0">
+          <div className="w-[220px] sm:w-[260px] lg:w-72 mx-auto lg:mx-0 shrink-0">
             {/* Main display */}
-            <div className="w-full aspect-[3/4] rounded-xl overflow-hidden border border-gray-200 bg-white mb-3">
+            <div className="w-full aspect-[3/4] rounded-xl overflow-hidden border border-white/[0.08] bg-[#111113] mb-3">
               {gallery[activeImg]?.src ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

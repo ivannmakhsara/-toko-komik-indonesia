@@ -5,8 +5,18 @@ import Link from 'next/link';
 import { useSeller } from '@/context/SellerContext';
 import { getOrders } from '@/lib/orders';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { formatRupiah } from '@/lib/data';
 import { Comic } from '@/lib/types';
+
+type SortKey = 'relevan' | 'termurah' | 'termahal' | 'terbaru' | 'az';
+const SORT_OPTS: { key: SortKey; label: string }[] = [
+  { key: 'relevan',  label: 'Relevan'  },
+  { key: 'terbaru',  label: 'Terbaru'  },
+  { key: 'termurah', label: 'Termurah' },
+  { key: 'termahal', label: 'Termahal' },
+  { key: 'az',       label: 'A–Z'      },
+];
 
 /* ── Flash-sale countdown ─────────────────────────────────── */
 function useCountdown() {
@@ -61,13 +71,25 @@ function ComicCover({ comic, className = '' }: { comic: Comic; className?: strin
 
 /* ── Product card (for horizontal scroll rows) ────────────── */
 function ProductCard({ comic }: { comic: Comic }) {
-  const { addToCart } = useCart();
+  const { addToCart }        = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const inWishlist = isInWishlist(comic.id);
   return (
     <div className="shrink-0 w-[176px] group cursor-pointer">
       <Link href={`/products/${comic.id}`}>
         <div style={{ aspectRatio: '3/4' }} className="rounded-[16px] overflow-hidden mb-3 border border-white/[0.06] relative">
           <ComicCover comic={comic} className="w-full h-full" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          {/* Wishlist badge */}
+          <button
+            onClick={e => { e.preventDefault(); inWishlist ? removeFromWishlist(comic.id) : addToWishlist(comic); }}
+            className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-sm border transition-all duration-150 active:scale-90 opacity-0 group-hover:opacity-100 ${
+              inWishlist ? 'bg-[#D90429] border-[#D90429] text-white' : 'bg-black/40 border-white/[0.15] text-white/60 hover:text-white'
+            }`}>
+            <svg className="w-3.5 h-3.5" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         </div>
         <p className="text-[13px] font-semibold text-white/85 line-clamp-1 tracking-tight leading-snug mb-0.5">{comic.title}</p>
         <p className="text-[11px] text-white/35 truncate mb-1.5">{comic.author}</p>
@@ -126,6 +148,7 @@ export default function HomePage() {
   const { h, m, s }    = useCountdown();
   const [orders, setOrders] = useState<import('@/lib/orders').Order[]>([]);
   const [genre, setGenre]   = useState('Semua');
+  const [sort,  setSort]    = useState<SortKey>('relevan');
   const [slide, setSlide]   = useState(0);
 
   useEffect(() => { getOrders().then(setOrders); }, []);
@@ -137,10 +160,14 @@ export default function HomePage() {
   }, []);
 
   const heroComics  = allProducts.slice(0, 3);
-  const pilihan     = useMemo(() => {
-    if (genre === 'Semua') return allProducts;
-    return allProducts.filter(c => c.genre === genre);
-  }, [allProducts, genre]);
+  const pilihan = useMemo(() => {
+    let list = genre === 'Semua' ? [...allProducts] : allProducts.filter(c => c.genre === genre);
+    if (sort === 'termurah')  list = list.sort((a, b) => a.price - b.price);
+    if (sort === 'termahal')  list = list.sort((a, b) => b.price - a.price);
+    if (sort === 'terbaru')   list = list.sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+    if (sort === 'az')        list = list.sort((a, b) => a.title.localeCompare(b.title));
+    return list;
+  }, [allProducts, genre, sort]);
   const trending    = allProducts.slice(0, 5);
   const topWeekly   = allProducts.slice(0, 7);
 
@@ -160,13 +187,11 @@ export default function HomePage() {
       <section className="relative overflow-hidden" style={{ minHeight: 'clamp(340px, 45vh, 440px)' }}>
 
         {/* Atmospheric BG */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0B] via-[#1a0505] to-[#260808]" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B]/70 via-transparent to-transparent" />
-          {/* Warm glow */}
           <div className="absolute right-1/4 top-0 w-[500px] h-[500px] bg-[#D90429]/[0.12] rounded-full blur-[120px]" />
           <div className="absolute right-1/3 bottom-0 w-[300px] h-[300px] bg-amber-600/[0.06] rounded-full blur-[80px]" />
-          {/* Grid texture */}
           <div className="absolute inset-0 opacity-[0.025]"
             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.3) 1px,transparent 1px)', backgroundSize: '40px 40px' }} />
         </div>
@@ -269,6 +294,21 @@ export default function HomePage() {
             Lihat Semua
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
+        </div>
+
+        {/* ── Sort bar ── */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <span className="text-[11px] text-white/25 uppercase tracking-widest font-semibold shrink-0">Urutkan:</span>
+          {SORT_OPTS.map(o => (
+            <button key={o.key} onClick={() => setSort(o.key)}
+              className={`text-[12px] px-3 py-1 rounded-full border transition-all whitespace-nowrap shrink-0 ${
+                sort === o.key
+                  ? 'bg-white/[0.10] border-white/[0.20] text-white font-semibold'
+                  : 'border-white/[0.07] text-white/35 hover:text-white/60 hover:border-white/[0.12]'
+              }`}>
+              {o.label}
+            </button>
+          ))}
         </div>
 
         {/* ── Pilihan untukmu ── */}

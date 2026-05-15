@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, Inter } from 'next/font/google';
 import './globals.css';
-import { CartProvider }   from '@/context/CartContext';
-import { SellerProvider } from '@/context/SellerContext';
-import { ChatProvider }   from '@/context/ChatContext';
-import { AuthProvider }   from '@/context/AuthContext';
+import { CartProvider }     from '@/context/CartContext';
+import { SellerProvider }   from '@/context/SellerContext';
+import { ChatProvider }     from '@/context/ChatContext';
+import { AuthProvider }     from '@/context/AuthContext';
+import { WishlistProvider } from '@/context/WishlistContext';
 import Sidebar    from '@/components/Sidebar';
 import TopBar     from '@/components/TopBar';
 import ChatWidget from '@/components/ChatWidget';
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
         <ChatProvider>
         <SellerProvider>
+        <WishlistProvider>
         <CartProvider>
           <div className="flex min-h-screen">
             {/* Left sidebar — desktop only */}
@@ -51,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <ChatWidget />
         </CartProvider>
+        </WishlistProvider>
         </SellerProvider>
         </ChatProvider>
         </AuthProvider>
