@@ -26,10 +26,10 @@ const TOP_TOKO = [
 ];
 
 const HIGHLIGHTS = [
-  { era: '1950-an',    icon: '🌟', title: 'Era Keemasan',        desc: 'R.A. Kosasih melahirkan Sri Asih (1954), superheroine pertama Indonesia.',          light: 'bg-amber-50',  border: 'border-amber-200',  badge: 'bg-amber-100 text-amber-700'   },
-  { era: '1960–70-an', icon: '⚡', title: 'Pahlawan Legendaris',  desc: 'Gundala, Wiro Sableng, Si Buta dari Goa Hantu mendominasi pasar.',                  light: 'bg-red-50',    border: 'border-red-200',    badge: 'bg-red-100 text-red-700'       },
-  { era: '2000-an',    icon: '🎭', title: 'Gelombang Baru',       desc: 'Benny & Mice dan Si Juki hadir dengan satire urban modern.',                         light: 'bg-blue-50',   border: 'border-blue-200',   badge: 'bg-blue-100 text-blue-700'     },
-  { era: '2010-an+',   icon: '🚀', title: 'Era Digital',          desc: 'Garudayana & Nusantara 2044 membawa komik Indonesia ke panggung global.',             light: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-700' },
+  { era: '1950-an',    icon: '🌟', title: 'Era Keemasan',        desc: 'R.A. Kosasih melahirkan Sri Asih (1954), superheroine pertama Indonesia.',          light: 'bg-amber-50',  border: 'border-amber-200',  badge: 'bg-amber-100 text-amber-700',   slug: 'era-keemasan'        },
+  { era: '1960–70-an', icon: '⚡', title: 'Pahlawan Legendaris',  desc: 'Gundala, Wiro Sableng, Si Buta dari Goa Hantu mendominasi pasar.',                  light: 'bg-red-50',    border: 'border-red-200',    badge: 'bg-red-100 text-red-700',       slug: 'pahlawan-legendaris' },
+  { era: '2000-an',    icon: '🎭', title: 'Gelombang Baru',       desc: 'Benny & Mice dan Si Juki hadir dengan satire urban modern.',                         light: 'bg-blue-50',   border: 'border-blue-200',   badge: 'bg-blue-100 text-blue-700',     slug: 'gelombang-baru'      },
+  { era: '2010-an+',   icon: '🚀', title: 'Era Digital',          desc: 'Garudayana & Nusantara 2044 membawa komik Indonesia ke panggung global.',             light: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-700', slug: 'era-digital'         },
 ];
 
 const RANK_MEDAL = ['🥇', '🥈', '🥉'];
@@ -258,25 +258,29 @@ export default function HomePage() {
           </aside>
         </div>
 
-        {/* ── Sorotan Komik Indonesia ── */}
+        {/* ── Napak Tilas Komik Indonesia ── */}
         <section>
           <div className="flex items-end justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Sorotan Komik Indonesia</h2>
+              <h2 className="text-xl font-bold text-gray-800">Napak Tilas Komik Indonesia</h2>
               <p className="text-sm text-gray-500">Perjalanan komik lokal dari masa ke masa</p>
             </div>
-            <span className="text-2xl">🇮🇩</span>
+            <Link href="/info/blog" className="text-sm text-red-700 font-semibold hover:underline">
+              Lihat Semua →
+            </Link>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {HIGHLIGHTS.map(h => (
-              <div key={h.era} className={`${h.light} ${h.border} border rounded-xl p-5`}>
+              <Link key={h.era} href={`/blog/${h.slug}`}
+                className={`${h.light} ${h.border} border rounded-xl p-5 block hover:shadow-md transition-shadow group`}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xl">{h.icon}</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${h.badge}`}>{h.era}</span>
                 </div>
-                <p className="font-bold text-gray-800 text-sm mb-1.5">{h.title}</p>
+                <p className="font-bold text-gray-800 text-sm mb-1.5 group-hover:text-red-700 transition-colors">{h.title}</p>
                 <p className="text-xs text-gray-600 leading-relaxed">{h.desc}</p>
-              </div>
+                <p className="text-xs text-red-600 font-semibold mt-3">Baca selengkapnya →</p>
+              </Link>
             ))}
           </div>
           <div className="bg-gray-800 text-white rounded-xl px-6 py-4 flex items-center gap-4">
