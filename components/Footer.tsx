@@ -4,24 +4,24 @@ const COLS = [
   {
     title: 'Toko Komik Indonesia',
     items: [
-      { label: 'Tentang Kami',                href: '#' },
-      { label: 'Hak Kekayaan Intelektual',    href: '#' },
-      { label: 'Karir',                        href: '#' },
-      { label: 'Blog',                         href: '#' },
-      { label: 'Program Afiliasi',             href: '#' },
-      { label: 'Toko Komik untuk Bisnis',      href: '#' },
-      { label: 'Solusi Marketing Komik',       href: '#' },
+      { label: 'Tentang Kami',                href: '/info/tentang-kami' },
+      { label: 'Hak Kekayaan Intelektual',    href: '/info/hak-kekayaan-intelektual' },
+      { label: 'Karir',                        href: '/info/karir' },
+      { label: 'Blog',                         href: '/info/blog' },
+      { label: 'Program Afiliasi',             href: '/info/program-afiliasi' },
+      { label: 'Toko Komik untuk Bisnis',      href: '/info/bisnis' },
+      { label: 'Solusi Marketing Komik',       href: '/info/marketing' },
     ],
   },
   {
     title: 'Beli',
     items: [
-      { label: 'Cara Berbelanja',              href: '#' },
-      { label: 'Pembayaran COD',               href: '#' },
-      { label: 'Bebas Ongkir',                 href: '#' },
-      { label: 'Promo Hari Ini',               href: '#' },
+      { label: 'Cara Berbelanja',              href: '/info/cara-berbelanja' },
+      { label: 'Pembayaran COD',               href: '/info/pembayaran-cod' },
+      { label: 'Bebas Ongkir',                 href: '/info/bebas-ongkir' },
+      { label: 'Promo Hari Ini',               href: '/info/promo' },
       { label: 'Komik Lokal Pilihan',          href: '/' },
-      { label: 'Flash Sale',                   href: '#' },
+      { label: 'Flash Sale',                   href: '/#produk' },
     ],
   },
   {
@@ -31,18 +31,18 @@ const COLS = [
       { label: 'Pusat Edukasi Seller',         href: '/seller' },
       { label: 'Tambah Produk',                href: '/seller/products/add' },
       { label: 'Kelola Pesanan',               href: '/seller/orders' },
-      { label: 'Promosi Toko',                 href: '#' },
+      { label: 'Promosi Toko',                 href: '/info/promosi-toko' },
     ],
   },
   {
     title: 'Bantuan & Panduan',
     items: [
-      { label: 'Pusat Bantuan',                href: '#' },
-      { label: 'Cara Pemesanan',               href: '#' },
-      { label: 'Cara Pembayaran',              href: '#' },
-      { label: 'Syarat dan Ketentuan',         href: '#' },
-      { label: 'Kebijakan Privasi',            href: '#' },
-      { label: 'Kebijakan Pengembalian',       href: '#' },
+      { label: 'Pusat Bantuan',                href: '/info/bantuan' },
+      { label: 'Cara Pemesanan',               href: '/info/cara-pemesanan' },
+      { label: 'Cara Pembayaran',              href: '/info/cara-pembayaran' },
+      { label: 'Syarat dan Ketentuan',         href: '/info/syarat-ketentuan' },
+      { label: 'Kebijakan Privasi',            href: '/info/kebijakan-privasi' },
+      { label: 'Kebijakan Pengembalian',       href: '/info/kebijakan-pengembalian' },
     ],
   },
 ];
@@ -216,10 +216,10 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-400">
-            <Link href="#" className="hover:text-red-700 transition-colors">Pemberitahuan Privasi</Link>
-            <Link href="#" className="hover:text-red-700 transition-colors">Hak Kekayaan Intelektual</Link>
-            <Link href="#" className="hover:text-red-700 transition-colors">Mitra Toko Komik</Link>
-            <Link href="#" className="hover:text-red-700 transition-colors">Media Sosial</Link>
+            <Link href="/info/kebijakan-privasi" className="hover:text-red-700 transition-colors">Pemberitahuan Privasi</Link>
+            <Link href="/info/hak-kekayaan-intelektual" className="hover:text-red-700 transition-colors">Hak Kekayaan Intelektual</Link>
+            <Link href="/info/mitra" className="hover:text-red-700 transition-colors">Mitra Toko Komik</Link>
+            <Link href="/info/media-sosial" className="hover:text-red-700 transition-colors">Media Sosial</Link>
           </div>
 
           <p className="text-xs text-gray-400">© 2026 Toko Komik Indonesia</p>
