@@ -10,6 +10,8 @@ export interface Comic {
   description: string;
   year: number;
   pages: number;
+  sellerId?: string;
+  sellerName?: string;
 }
 
 export interface CartItem {

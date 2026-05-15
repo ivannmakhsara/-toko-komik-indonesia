@@ -65,12 +65,21 @@ export default function ProductPage() {
       <div className="max-w-6xl mx-auto px-4 py-6">
 
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-5">
+        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-5 flex-wrap">
           <Link href="/" className="hover:text-red-600 transition-colors">Beranda</Link>
           <span>›</span>
           <span className="hover:text-red-600 cursor-pointer transition-colors">{comic.genre}</span>
           <span>›</span>
-          <span className="text-gray-600 truncate max-w-[260px]">{comic.title}</span>
+          <span className="text-gray-600 truncate max-w-[200px]">{comic.title}</span>
+          {comic.sellerId && (
+            <>
+              <span>›</span>
+              <Link href={`/toko/${comic.sellerId}`}
+                className="text-red-600 hover:underline font-medium truncate max-w-[160px]">
+                🏪 {comic.sellerName}
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* ── Three-column layout ── */}
