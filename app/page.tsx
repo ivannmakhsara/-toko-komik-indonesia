@@ -96,14 +96,14 @@ export default function HomePage() {
       <div className={`bg-gradient-to-r ${cur.bg} text-white relative overflow-hidden transition-all duration-700`}>
         <div className="absolute inset-0 opacity-5"
           style={{ backgroundImage: 'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)', backgroundSize: '24px 24px' }} />
-        <div className="max-w-6xl mx-auto px-6 py-12 md:py-16 flex items-center justify-between relative z-10">
+        <div className="max-w-6xl mx-auto px-5 py-8 md:py-16 flex items-center justify-between relative z-10">
           <div className="max-w-xl">
-            <p className="text-white/60 text-xs font-bold tracking-widest uppercase mb-3">{cur.tag}</p>
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-4">
+            <p className="text-white/60 text-xs font-bold tracking-widest uppercase mb-2">{cur.tag}</p>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold leading-tight mb-3">
               {cur.title[0]}<br />{cur.title[1]}
             </h1>
-            <p className="text-white/75 text-base mb-6">{cur.sub}</p>
-            <a href="#produk" className="inline-block bg-white text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors text-sm shadow-lg">
+            <p className="text-white/75 text-sm sm:text-base mb-5 hidden sm:block">{cur.sub}</p>
+            <a href="#produk" className="inline-block bg-white text-gray-900 font-bold px-5 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-sm shadow-lg">
               {cur.cta}
             </a>
           </div>

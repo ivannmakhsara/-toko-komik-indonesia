@@ -74,10 +74,10 @@ export default function ProductPage() {
         </nav>
 
         {/* ── Three-column layout ── */}
-        <div className="flex gap-5 mb-10">
+        <div className="flex flex-col lg:flex-row gap-5 mb-10 pb-20 lg:pb-0">
 
-          {/* ─ Left: image gallery ─ */}
-          <div className="w-72 shrink-0">
+          {/* ─ Gallery ─ */}
+          <div className="w-full lg:w-72 shrink-0">
             {/* Main display */}
             <div className="w-full aspect-[3/4] rounded-xl overflow-hidden border border-gray-200 bg-white mb-3">
               {gallery[activeImg]?.src ? (
@@ -233,8 +233,8 @@ export default function ProductPage() {
             </div>
           </div>
 
-          {/* ─ Right: sticky purchase panel ─ */}
-          <div className="w-60 shrink-0">
+          {/* ─ Right: sticky purchase panel (desktop) ─ */}
+          <div className="hidden lg:block w-60 shrink-0">
             <div className="sticky top-4 bg-white border border-gray-200 rounded-xl p-5 space-y-4">
               <p className="text-sm font-semibold text-gray-700">Atur jumlah dan catatan</p>
 
@@ -344,6 +344,29 @@ export default function ProductPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── Mobile sticky buy bar ── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-2 z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden shrink-0">
+          <button onClick={() => setQty(q => Math.max(1, q - 1))}
+            className="w-9 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xl font-light">
+            −
+          </button>
+          <span className="w-8 text-center text-sm font-bold">{qty}</span>
+          <button onClick={() => setQty(q => q + 1)}
+            className="w-9 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-xl font-light">
+            +
+          </button>
+        </div>
+        <button onClick={handleAddToCart}
+          className="flex-1 border border-red-700 text-red-700 font-bold py-2.5 rounded-xl hover:bg-red-50 transition-colors text-sm">
+          + Keranjang
+        </button>
+        <button onClick={handleBuyNow}
+          className="flex-1 bg-red-700 text-white font-bold py-2.5 rounded-xl hover:bg-red-800 transition-colors text-sm">
+          Beli Sekarang
+        </button>
       </div>
 
       {/* Lightbox */}

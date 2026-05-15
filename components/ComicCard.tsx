@@ -11,7 +11,7 @@ export default function ComicCard({ comic }: { comic: Comic }) {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <Link href={`/products/${comic.id}`}>
-        <div className="h-52 overflow-hidden cursor-pointer relative">
+        <div className="h-40 sm:h-52 overflow-hidden cursor-pointer relative">
           {comic.coverImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={comic.coverImage} alt={comic.title} className="w-full h-full object-cover" />

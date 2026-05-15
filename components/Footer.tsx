@@ -128,7 +128,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 pt-10 pb-6">
 
         {/* ── Main columns ── */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 md:gap-8 mb-10">
 
           {/* Link columns */}
           {COLS.map(col => (
@@ -206,7 +206,7 @@ export default function Footer() {
         </div>
 
         {/* ── Bottom bar ── */}
-        <div className="border-t border-gray-100 pt-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="border-t border-gray-100 pt-5 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">📚</span>
             <div>
