@@ -63,7 +63,7 @@ export default function Navbar() {
                 </div>
                 <span className="text-sm font-medium hidden md:block max-w-[100px] truncate">{user.name}</span>
               </Link>
-              <button onClick={logout}
+              <button onClick={() => logout()}
                 className="text-xs text-red-300 hover:text-white transition-colors px-2 py-1 rounded hover:bg-red-800">
                 Keluar
               </button>

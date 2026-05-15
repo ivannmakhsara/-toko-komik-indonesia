@@ -15,8 +15,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  const hasGoogleClientId = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const [verified, setVerified] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState('');
 
   const googleSignup = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -42,17 +42,46 @@ export default function RegisterPage() {
     setError('');
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!form.name.trim()) { setError('Nama wajib diisi'); return; }
     if (!form.email.includes('@')) { setError('Email tidak valid'); return; }
     if (form.password.length < 6) { setError('Password minimal 6 karakter'); return; }
     if (form.password !== form.confirm) { setError('Password tidak sama'); return; }
     setLoading(true);
-    const err = register(form.name, form.email, form.password, role);
+    const { error: err, needsVerification } = await register(form.name, form.email, form.password, role);
     setLoading(false);
     if (err) { setError(err); return; }
-    router.push(role === 'seller' ? '/seller' : '/');
+    if (needsVerification) {
+      setVerifyEmail(form.email);
+      setVerified(true);
+    } else {
+      router.push(role === 'seller' ? '/seller' : '/');
+    }
+  }
+
+  /* Email verification success screen */
+  if (verified) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <div className="w-full max-w-md text-center bg-white rounded-2xl shadow-lg p-10">
+          <p className="text-5xl mb-4">📧</p>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Cek Email Kamu!</h1>
+          <p className="text-gray-500 text-sm mb-1">
+            Kami kirim link verifikasi ke:
+          </p>
+          <p className="font-semibold text-red-700 mb-4">{verifyEmail}</p>
+          <p className="text-gray-400 text-sm mb-6">
+            Klik link di email tersebut untuk mengaktifkan akun, lalu kamu bisa masuk.
+          </p>
+          <Link href="/login"
+            className="inline-block bg-red-700 text-white px-6 py-3 rounded-xl hover:bg-red-800 transition-colors font-medium text-sm">
+            Ke Halaman Masuk
+          </Link>
+          <p className="text-xs text-gray-400 mt-4">Tidak dapat email? Cek folder Spam.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -91,8 +120,8 @@ export default function RegisterPage() {
           {/* Google */}
           <button
             onClick={() => { setError(''); googleSignup(); }}
-            disabled={googleLoading || !hasGoogleClientId}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:bg-gray-50 transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:bg-gray-50 transition-colors mb-6 disabled:opacity-50"
           >
             {googleLoading ? (
               <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -115,7 +144,6 @@ export default function RegisterPage() {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          {/* Manual form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>

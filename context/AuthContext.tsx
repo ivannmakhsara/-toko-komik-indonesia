@@ -1,14 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-
-interface StoredUser {
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  role: 'buyer' | 'seller';
-}
+import { supabase } from '@/lib/supabase';
+import type { User as SbUser } from '@supabase/supabase-js';
 
 export interface User {
   id: string;
@@ -20,16 +14,28 @@ export interface User {
 interface AuthCtx {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => string | null;
+  login:           (email: string, password: string) => Promise<string | null>;
+  register:        (name: string, email: string, password: string, role: 'buyer' | 'seller') => Promise<{ error: string | null; needsVerification: boolean }>;
   loginWithGoogle: (email: string, name: string, role?: 'buyer' | 'seller') => void;
-  register: (name: string, email: string, password: string, role: 'buyer' | 'seller') => string | null;
-  logout: () => void;
+  logout:          () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
 
-function getStoredUsers(): StoredUser[] {
-  try { return JSON.parse(localStorage.getItem('toko-users') || '[]'); } catch { return []; }
+function fromSbUser(u: SbUser): User {
+  return {
+    id:    u.id,
+    name:  u.user_metadata?.name ?? u.email?.split('@')[0] ?? 'User',
+    email: u.email ?? '',
+    role:  u.user_metadata?.role ?? 'buyer',
+  };
+}
+
+function getLocalUser(): User | null {
+  try {
+    const s = localStorage.getItem('toko-session');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -37,57 +43,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const s = localStorage.getItem('toko-session');
-      if (s) setUser(JSON.parse(s));
-    } finally {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(fromSbUser(session.user));
+      } else {
+        setUser(getLocalUser());
+      }
       setLoading(false);
-    }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(fromSbUser(session.user));
+      } else {
+        setUser(getLocalUser());
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  function startSession(u: User) {
+  async function login(email: string, password: string): Promise<string | null> {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) return null;
+    if (error.message.includes('Email not confirmed')) return 'Cek email kamu untuk verifikasi terlebih dahulu';
+    if (error.message.includes('Invalid login credentials')) return 'Email atau password salah';
+    return error.message;
+  }
+
+  async function register(
+    name: string, email: string, password: string, role: 'buyer' | 'seller'
+  ): Promise<{ error: string | null; needsVerification: boolean }> {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, role },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      const msg = error.message.includes('already registered')
+        ? 'Email sudah terdaftar'
+        : error.message;
+      return { error: msg, needsVerification: false };
+    }
+    return { error: null, needsVerification: true };
+  }
+
+  /* Google login — tetap pakai localStorage sampai Supabase OAuth dikonfigurasi */
+  function loginWithGoogle(email: string, name: string, role: 'buyer' | 'seller' = 'buyer'): void {
+    const stored = JSON.parse(localStorage.getItem('toko-users') || '[]');
+    let found = stored.find((u: { email: string }) => u.email.toLowerCase() === email.toLowerCase());
+    if (!found) {
+      found = { id: `user-${Date.now()}`, name, email, password: '', role };
+      localStorage.setItem('toko-users', JSON.stringify([...stored, found]));
+    }
+    const { password: _p, ...u } = found;
     localStorage.setItem('toko-session', JSON.stringify(u));
     setUser(u);
   }
 
-  function login(email: string, password: string): string | null {
-    const found = getStoredUsers().find(
-      u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!found) return 'Email atau password salah';
-    const { password: _p, ...u } = found;
-    startSession(u);
-    return null;
-  }
-
-  function loginWithGoogle(email: string, name: string, role: 'buyer' | 'seller' = 'buyer'): void {
-    const users = getStoredUsers();
-    let found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!found) {
-      found = { id: `user-${Date.now()}`, name, email, password: '', role };
-      localStorage.setItem('toko-users', JSON.stringify([...users, found]));
-    }
-    const { password: _p, ...u } = found;
-    startSession(u);
-  }
-
-  function register(name: string, email: string, password: string, role: 'buyer' | 'seller'): string | null {
-    const users = getStoredUsers();
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) return 'Email sudah terdaftar';
-    const newUser: StoredUser = { id: `user-${Date.now()}`, name, email, password, role };
-    localStorage.setItem('toko-users', JSON.stringify([...users, newUser]));
-    const { password: _p, ...u } = newUser;
-    startSession(u);
-    return null;
-  }
-
-  function logout() {
+  async function logout(): Promise<void> {
+    await supabase.auth.signOut();
     localStorage.removeItem('toko-session');
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout } as AuthCtx}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

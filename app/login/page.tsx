@@ -15,8 +15,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const hasGoogleClientId = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -41,11 +39,11 @@ export default function LoginPage() {
     setError('');
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!form.email || !form.password) { setError('Isi semua field'); return; }
     setLoading(true);
-    const err = login(form.email, form.password);
+    const err = await login(form.email, form.password);
     setLoading(false);
     if (err) { setError(err); return; }
     router.push('/');
@@ -61,11 +59,10 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          {/* Google login */}
           <button
             onClick={() => { setError(''); googleLogin(); }}
-            disabled={googleLoading || !hasGoogleClientId}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:bg-gray-50 transition-colors mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:bg-gray-50 transition-colors mb-6 disabled:opacity-50"
           >
             {googleLoading ? (
               <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
