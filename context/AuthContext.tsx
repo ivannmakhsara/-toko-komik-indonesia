@@ -21,7 +21,7 @@ interface AuthCtx {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => string | null;
-  loginWithGoogle: (email: string, role?: 'buyer' | 'seller') => void;
+  loginWithGoogle: (email: string, name: string, role?: 'buyer' | 'seller') => void;
   register: (name: string, email: string, password: string, role: 'buyer' | 'seller') => string | null;
   logout: () => void;
 }
@@ -60,13 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  function loginWithGoogle(email: string, role: 'buyer' | 'seller' = 'buyer'): void {
+  function loginWithGoogle(email: string, name: string, role: 'buyer' | 'seller' = 'buyer'): void {
     const users = getStoredUsers();
     let found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!found) {
-      const name = email.split('@')[0]
-        .replace(/[._]/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase());
       found = { id: `user-${Date.now()}`, name, email, password: '', role };
       localStorage.setItem('toko-users', JSON.stringify([...users, found]));
     }
@@ -90,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout } as AuthCtx}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,6 +7,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
+import GoogleProvider from '@/components/GoogleProvider';
 
 export const metadata: Metadata = {
   title: 'Toko Komik Indonesia',
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="id">
       <body className="min-h-screen flex flex-col">
+        <GoogleProvider>
         <AuthProvider>
         <ChatProvider>
         <SellerProvider>
@@ -29,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </SellerProvider>
         </ChatProvider>
         </AuthProvider>
+        </GoogleProvider>
       </body>
     </html>
   );
