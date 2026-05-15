@@ -22,6 +22,7 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   'Dikirim':       'bg-blue-500',
   'Sampai':        'bg-purple-500',
   'Selesai':       'bg-green-500',
+  'Dibatalkan':    'bg-red-500',
 };
 
 const STATUS_ICON: Record<OrderStatus, string> = {
@@ -30,6 +31,7 @@ const STATUS_ICON: Record<OrderStatus, string> = {
   'Dikirim':       '🚚',
   'Sampai':        '📍',
   'Selesai':       '✅',
+  'Dibatalkan':    '❌',
 };
 
 export default function SellerDashboard() {

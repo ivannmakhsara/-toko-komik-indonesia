@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type OrderStatus = 'Pesanan Masuk' | 'Diproses' | 'Dikirim' | 'Sampai' | 'Selesai';
+export type OrderStatus = 'Pesanan Masuk' | 'Diproses' | 'Dikirim' | 'Sampai' | 'Selesai' | 'Dibatalkan';
 
 export const STATUS_STEPS: OrderStatus[] = [
   'Pesanan Masuk', 'Diproses', 'Dikirim', 'Sampai', 'Selesai',
@@ -12,6 +12,7 @@ export const STATUS_ICON: Record<OrderStatus, string> = {
   'Dikirim':       '🚚',
   'Sampai':        '📦',
   'Selesai':       '✅',
+  'Dibatalkan':    '❌',
 };
 
 export interface OrderItem {
@@ -146,5 +147,9 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
 
 export function nextStatus(current: OrderStatus): OrderStatus | null {
   const idx = STATUS_STEPS.indexOf(current);
-  return idx < STATUS_STEPS.length - 1 ? STATUS_STEPS[idx + 1] : null;
+  return idx >= 0 && idx < STATUS_STEPS.length - 1 ? STATUS_STEPS[idx + 1] : null;
+}
+
+export async function cancelOrder(orderId: string): Promise<void> {
+  await updateOrderStatus(orderId, 'Dibatalkan');
 }

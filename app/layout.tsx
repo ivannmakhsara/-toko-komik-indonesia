@@ -8,6 +8,7 @@ import { AuthProvider }   from '@/context/AuthContext';
 import Sidebar    from '@/components/Sidebar';
 import TopBar     from '@/components/TopBar';
 import ChatWidget from '@/components/ChatWidget';
+import Footer    from '@/components/Footer';
 import GoogleProvider from '@/components/GoogleProvider';
 
 const displayFont = Space_Grotesk({
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex-1 flex flex-col lg:ml-[168px] min-h-screen">
               <TopBar />
               <main className="flex-1">{children}</main>
+              <Footer />
             </div>
           </div>
           <ChatWidget />

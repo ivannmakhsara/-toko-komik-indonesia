@@ -31,7 +31,7 @@ export default function TopBar() {
         <div className="w-7 h-7 bg-[#D90429] rounded-[7px] flex items-center justify-center">
           <svg viewBox="0 0 32 32" className="w-4 h-4 text-white" fill="white"><path d="M16 6C16 6 9 4 4 6v18c5-2 12 0 12 0s7-2 12 0V6c-5-2-12 0-12 0z"/></svg>
         </div>
-        <span className="font-display font-bold text-[#F2F2F0] text-[13px]">Toko Komik</span>
+        <span className="font-display font-bold text-[#F2F2F0] text-[13px]">Toko Komik Indonesia</span>
       </Link>
 
       {/* ── Search ── */}
