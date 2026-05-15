@@ -43,14 +43,16 @@ export default function HomePage() {
   const [search, setSearch]     = useState('');
   const [tab, setTab]           = useState<Tab>('Untuk Kamu');
   const [chartTab, setChartTab] = useState<'harian' | 'mingguan' | 'bulanan'>('mingguan');
+  const [orders, setOrders] = useState<import('@/lib/orders').Order[]>([]);
 
   useEffect(() => {
     const t = setInterval(() => setSlide(s => (s + 1) % SLIDES.length), 4500);
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => { getOrders().then(setOrders); }, []);
+
   const chartData = useMemo(() => {
-    const orders = getOrders();
     const now = Date.now();
     const DAY = 86_400_000;
     const aggregate = (maxAge: number) => {
@@ -63,7 +65,7 @@ export default function HomePage() {
         .map(([title, sold]) => ({ title, sold, color: allProducts.find(p => p.title === title)?.color ?? '#dc2626' }));
     };
     return { harian: aggregate(DAY), mingguan: aggregate(7 * DAY), bulanan: aggregate(30 * DAY) };
-  }, [allProducts]);
+  }, [orders, allProducts]);
 
   const activeChart = chartData[chartTab];
   const maxSold     = Math.max(...activeChart.map(c => c.sold), 1);
