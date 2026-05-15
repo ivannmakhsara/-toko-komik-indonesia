@@ -5,9 +5,9 @@ import { CartProvider }   from '@/context/CartContext';
 import { SellerProvider } from '@/context/SellerContext';
 import { ChatProvider }   from '@/context/ChatContext';
 import { AuthProvider }   from '@/context/AuthContext';
-import Navbar      from '@/components/Navbar';
-import Footer      from '@/components/Footer';
-import ChatWidget  from '@/components/ChatWidget';
+import Sidebar    from '@/components/Sidebar';
+import TopBar     from '@/components/TopBar';
+import ChatWidget from '@/components/ChatWidget';
 import GoogleProvider from '@/components/GoogleProvider';
 
 const displayFont = Space_Grotesk({
@@ -24,22 +24,29 @@ const bodyFont = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Komik Indonesia — Platform Komik Lokal #1',
+  title: 'Toko Komik Indonesia — Platform Komik Lokal #1',
   description: 'Temukan ratusan komik lokal Indonesia. Dari Gundala hingga Garudayana — dukung kreator Indonesia.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
-      <body className={`${displayFont.variable} ${bodyFont.variable} min-h-screen flex flex-col`}>
+      <body className={`${displayFont.variable} ${bodyFont.variable} bg-[#0A0A0B]`}>
         <GoogleProvider>
         <AuthProvider>
         <ChatProvider>
         <SellerProvider>
         <CartProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <div className="flex min-h-screen">
+            {/* Left sidebar — desktop only */}
+            <Sidebar />
+
+            {/* Main column */}
+            <div className="flex-1 flex flex-col lg:ml-[168px] min-h-screen">
+              <TopBar />
+              <main className="flex-1">{children}</main>
+            </div>
+          </div>
           <ChatWidget />
         </CartProvider>
         </SellerProvider>
