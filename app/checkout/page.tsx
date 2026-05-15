@@ -30,7 +30,7 @@ export default function CheckoutPage() {
     city: '',
     province: '',
     shipping: '',
-    payment: 'transfer',
+    payment: 'bca-va',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,7 +67,7 @@ export default function CheckoutPage() {
     setErrors(prev => ({ ...prev, [e.target.name]: '' }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const e2 = validate();
     if (Object.keys(e2).length > 0) { setErrors(e2); return; }
@@ -192,22 +192,68 @@ export default function CheckoutPage() {
           {/* Pembayaran */}
           <div className="bg-white rounded-xl shadow p-5">
             <h2 className="font-semibold text-gray-700 mb-4">Metode Pembayaran</h2>
+
+            {/* Virtual Account */}
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Transfer Virtual Account</p>
+            <div className="flex flex-col gap-2 mb-4">
+              {[
+                { value: 'bca-va',     label: 'BCA Virtual Account',     color: 'bg-blue-600',  initial: 'BCA' },
+                { value: 'mandiri-va', label: 'Mandiri Virtual Account',  color: 'bg-yellow-500', initial: 'MDR' },
+                { value: 'bni-va',     label: 'BNI Virtual Account',      color: 'bg-orange-500', initial: 'BNI' },
+                { value: 'bri-va',     label: 'BRI Virtual Account',      color: 'bg-blue-800',  initial: 'BRI' },
+                { value: 'permata-va', label: 'Permata Virtual Account',  color: 'bg-red-500',   initial: 'PRM' },
+              ].map(opt => (
+                <label key={opt.value} className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${
+                  form.payment === opt.value ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-300'
+                }`}>
+                  <input type="radio" name="payment" value={opt.value}
+                    checked={form.payment === opt.value} onChange={handleChange} className="accent-red-700" />
+                  <div className={`w-10 h-6 ${opt.color} rounded flex items-center justify-center`}>
+                    <span className="text-white text-[9px] font-bold">{opt.initial}</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* E-Wallet */}
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Dompet Digital</p>
+            <div className="flex flex-col gap-2 mb-4">
+              {[
+                { value: 'gopay',      label: 'GoPay',      color: 'bg-green-500',  initial: 'GP' },
+                { value: 'ovo',        label: 'OVO',         color: 'bg-purple-600', initial: 'OVO' },
+                { value: 'dana',       label: 'DANA',        color: 'bg-blue-500',  initial: 'DN' },
+                { value: 'shopeepay',  label: 'ShopeePay',  color: 'bg-orange-500', initial: 'SP' },
+              ].map(opt => (
+                <label key={opt.value} className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${
+                  form.payment === opt.value ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-300'
+                }`}>
+                  <input type="radio" name="payment" value={opt.value}
+                    checked={form.payment === opt.value} onChange={handleChange} className="accent-red-700" />
+                  <div className={`w-10 h-6 ${opt.color} rounded flex items-center justify-center`}>
+                    <span className="text-white text-[9px] font-bold">{opt.initial}</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* QRIS & COD */}
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Lainnya</p>
             <div className="flex flex-col gap-2">
               {[
-                { value: 'transfer', label: '🏦 Transfer Bank' },
-                { value: 'qris',     label: '📱 QRIS' },
-                { value: 'cod',      label: '💵 Bayar di Tempat (COD)' },
+                { value: 'qris', label: 'QRIS', color: 'bg-gray-800', initial: 'QR' },
+                { value: 'cod',  label: 'Bayar di Tempat (COD)', color: 'bg-green-700', initial: 'COD' },
               ].map(opt => (
-                <label key={opt.value} className="flex items-center gap-3 border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-red-300 transition-colors">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value={opt.value}
-                    checked={form.payment === opt.value}
-                    onChange={handleChange}
-                    className="accent-red-700"
-                  />
-                  <span className="text-sm font-medium">{opt.label}</span>
+                <label key={opt.value} className={`flex items-center gap-3 border rounded-lg p-3 cursor-pointer transition-colors ${
+                  form.payment === opt.value ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-300'
+                }`}>
+                  <input type="radio" name="payment" value={opt.value}
+                    checked={form.payment === opt.value} onChange={handleChange} className="accent-red-700" />
+                  <div className={`w-10 h-6 ${opt.color} rounded flex items-center justify-center`}>
+                    <span className="text-white text-[9px] font-bold">{opt.initial}</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{opt.label}</span>
                 </label>
               ))}
             </div>
