@@ -19,7 +19,7 @@ export default function ProfilePage() {
       );
       setEditName(user.name);
     }
-  }, [user]);
+  }, [user?.id, user?.email, user?.name]);
 
   function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });

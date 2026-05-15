@@ -53,11 +53,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(fromSbUser(session.user));
-      } else {
-        setUser(getLocalUser());
-      }
+      const next = session?.user ? fromSbUser(session.user) : getLocalUser();
+      setUser(prev => {
+        if (prev === next) return prev;
+        if (prev && next &&
+            prev.id === next.id && prev.name === next.name &&
+            prev.email === next.email && prev.role === next.role) return prev;
+        return next;
+      });
     });
 
     return () => subscription.unsubscribe();
