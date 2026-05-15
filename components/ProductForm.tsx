@@ -49,7 +49,7 @@ export default function ProductForm({ initial = EMPTY, onSubmit, submitLabel }: 
     if (form.price <= 0) e.price = 'Harga harus lebih dari 0';
     if (!form.description.trim()) e.description = 'Deskripsi wajib diisi';
     if (form.year < 1900 || form.year > new Date().getFullYear()) e.year = 'Tahun tidak valid';
-    if (form.pages <= 0) e.pages = 'Jumlah halaman harus lebih dari 0';
+    if ((form.pages ?? 0) <= 0) e.pages = 'Jumlah halaman harus lebih dari 0';
     setErrors(e);
     return Object.keys(e).length === 0;
   }

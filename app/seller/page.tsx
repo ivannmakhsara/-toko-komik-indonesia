@@ -41,7 +41,7 @@ export default function SellerDashboard() {
   const [lastUpdated, setLastUpdated] = useState('');
 
   useEffect(() => {
-    setOrders(getOrders());
+    getOrders().then(setOrders);
     setLastUpdated(
       new Date().toLocaleString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSeller } from '@/context/SellerContext';
@@ -33,19 +33,22 @@ export default function StorePage() {
   const isOwner    = user?.id === sellerId;
 
   /* Stats from orders */
-  const { totalSold, totalRatings } = useMemo(() => {
-    const orders = getOrders();
-    const titles = new Set(storeProducts.map(p => p.title));
-    let sold = 0; let ratings = 0;
-    orders.forEach(o => {
-      o.items.forEach(item => {
-        if (titles.has(item.title)) {
-          sold += item.quantity;
-          if (o.status === 'Selesai') ratings++;
-        }
+  const [orderStats, setOrderStats] = useState({ totalSold: 0, totalRatings: 0 });
+  const { totalSold, totalRatings } = orderStats;
+  useEffect(() => {
+    getOrders().then(orders => {
+      const titles = new Set(storeProducts.map(p => p.title));
+      let sold = 0; let ratings = 0;
+      orders.forEach(o => {
+        o.items.forEach(item => {
+          if (titles.has(item.title)) {
+            sold += item.quantity;
+            if (o.status === 'Selesai') ratings++;
+          }
+        });
       });
+      setOrderStats({ totalSold: sold, totalRatings: ratings });
     });
-    return { totalSold: sold, totalRatings: ratings };
   }, [storeProducts]);
 
   /* Filtered products for Produk tab */

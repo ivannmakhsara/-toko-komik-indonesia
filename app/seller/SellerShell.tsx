@@ -43,8 +43,7 @@ export default function SellerShell({ children }: { children: React.ReactNode })
   }, [loading, user, router]);
 
   useEffect(() => {
-    const orders = getOrders();
-    setNewOrders(orders.filter(o => o.status === 'Pesanan Masuk').length);
+    getOrders().then(orders => setNewOrders(orders.filter(o => o.status === 'Pesanan Masuk').length));
   }, [pathname]);
 
   if (loading) {

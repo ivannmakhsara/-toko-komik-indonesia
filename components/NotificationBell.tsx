@@ -22,7 +22,7 @@ export default function NotificationBell() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) setOrders(getOrders());
+    if (open) getOrders().then(setOrders);
   }, [open]);
 
   useEffect(() => {
