@@ -7,7 +7,8 @@ import { getOrders, Order, STATUS_STEPS, STATUS_ICON, OrderStatus } from '@/lib/
 import { formatRupiah } from '@/lib/data';
 
 export default function ProfilePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, upgradeToSeller } = useAuth();
+  const [upgrading, setUpgrading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -83,6 +84,38 @@ export default function ProfilePage() {
               <button onClick={() => setEditing(true)} className="text-sm text-red-700 hover:underline shrink-0">Edit</button>
             )}
           </div>
+
+          {/* Upgrade to seller */}
+          {user.role === 'buyer' && (
+            <div className="mt-5 border-t pt-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Ingin berjualan komik?</p>
+                <p className="text-xs text-gray-400 mt-0.5">Upgrade akun kamu jadi Seller — gratis, tanpa daftar ulang.</p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (!confirm('Upgrade akun jadi Seller? Kamu tetap bisa belanja seperti biasa.')) return;
+                  setUpgrading(true);
+                  await upgradeToSeller();
+                  setUpgrading(false);
+                }}
+                disabled={upgrading}
+                className="shrink-0 bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-800 transition-colors disabled:opacity-60"
+              >
+                {upgrading ? 'Memproses...' : '🏪 Buka Toko'}
+              </button>
+            </div>
+          )}
+
+          {/* Go to seller dashboard */}
+          {user.role === 'seller' && (
+            <div className="mt-4 border-t pt-4">
+              <Link href="/seller"
+                className="inline-flex items-center gap-2 bg-red-50 text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors">
+                🏪 Kelola Toko Saya →
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Order history */}

@@ -14,10 +14,11 @@ export interface User {
 interface AuthCtx {
   user: User | null;
   loading: boolean;
-  login:           (email: string, password: string) => Promise<string | null>;
-  register:        (name: string, email: string, password: string, role: 'buyer' | 'seller') => Promise<{ error: string | null; needsVerification: boolean }>;
-  loginWithGoogle: (email: string, name: string, role?: 'buyer' | 'seller') => void;
-  logout:          () => Promise<void>;
+  login:            (email: string, password: string) => Promise<string | null>;
+  register:         (name: string, email: string, password: string, role: 'buyer' | 'seller') => Promise<{ error: string | null; needsVerification: boolean }>;
+  loginWithGoogle:  (email: string, name: string, role?: 'buyer' | 'seller') => void;
+  upgradeToSeller:  () => Promise<void>;
+  logout:           () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -107,6 +108,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
   }
 
+  async function upgradeToSeller(): Promise<void> {
+    if (!user || user.role === 'seller') return;
+
+    /* Supabase Auth user */
+    const { data: { user: sbUser } } = await supabase.auth.getUser();
+    if (sbUser) {
+      await supabase.auth.updateUser({ data: { ...sbUser.user_metadata, role: 'seller' } });
+      await supabase.from('profiles').update({ role: 'seller' }).eq('id', sbUser.id);
+    }
+
+    /* localStorage fallback (Google login) */
+    const stored = JSON.parse(localStorage.getItem('toko-users') || '[]');
+    const updated = stored.map((u: { email: string; role: string }) =>
+      u.email === user.email ? { ...u, role: 'seller' } : u
+    );
+    localStorage.setItem('toko-users', JSON.stringify(updated));
+    const newUser = { ...user, role: 'seller' as const };
+    localStorage.setItem('toko-session', JSON.stringify(newUser));
+    setUser(newUser);
+  }
+
   async function logout(): Promise<void> {
     await supabase.auth.signOut();
     localStorage.removeItem('toko-session');
@@ -114,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, upgradeToSeller, logout }}>
       {children}
     </AuthContext.Provider>
   );
