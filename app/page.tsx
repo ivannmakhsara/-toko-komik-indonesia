@@ -38,12 +38,17 @@ type Tab = typeof TABS[number];
 
 export default function HomePage() {
   const { allProducts } = useSeller();
-  const [slide, setSlide]       = useState(0);
-  const [genre, setGenre]       = useState('Semua');
-  const [search, setSearch]     = useState('');
-  const [tab, setTab]           = useState<Tab>('Untuk Kamu');
-  const [chartTab, setChartTab] = useState<'harian' | 'mingguan' | 'bulanan'>('mingguan');
-  const [orders, setOrders] = useState<import('@/lib/orders').Order[]>([]);
+  const [slide, setSlide]         = useState(0);
+  const [genre, setGenre]         = useState('Semua');
+  const [search, setSearch]       = useState('');
+  const [tab, setTab]             = useState<Tab>('Untuk Kamu');
+  const [chartTab, setChartTab]   = useState<'harian' | 'mingguan' | 'bulanan'>('mingguan');
+  const [orders, setOrders]       = useState<import('@/lib/orders').Order[]>([]);
+  const [showFilter, setShowFilter] = useState(false);
+  const [minPrice, setMinPrice]   = useState('');
+  const [maxPrice, setMaxPrice]   = useState('');
+  const [sortBy, setSortBy]       = useState<'relevan' | 'termurah' | 'termahal' | 'terbaru' | 'terlama' | 'az'>('relevan');
+  const [condition, setCondition] = useState<'semua' | 'baru' | 'bekas'>('semua');
 
   useEffect(() => {
     const t = setInterval(() => setSlide(s => (s + 1) % SLIDES.length), 4500);
@@ -77,10 +82,20 @@ export default function HomePage() {
       c.title.toLowerCase().includes(search.toLowerCase()) ||
       c.author.toLowerCase().includes(search.toLowerCase())
     );
+    const min = minPrice ? Number(minPrice.replace(/\D/g, '')) : 0;
+    const max = maxPrice ? Number(maxPrice.replace(/\D/g, '')) : Infinity;
+    if (min > 0) base = base.filter(c => c.price >= min);
+    if (max < Infinity) base = base.filter(c => c.price <= max);
+    if (condition !== 'semua') base = base.filter(c => (c.condition ?? 'baru').toLowerCase() === condition);
     if (tab === 'Terbaru')    return base.sort((a, b) => b.year - a.year);
     if (tab === 'Flash Sale') return base.sort((a, b) => b.price - a.price).slice(0, 8);
+    if (sortBy === 'termurah') return base.sort((a, b) => a.price - b.price);
+    if (sortBy === 'termahal') return base.sort((a, b) => b.price - a.price);
+    if (sortBy === 'terbaru')  return base.sort((a, b) => b.year - a.year);
+    if (sortBy === 'terlama')  return base.sort((a, b) => a.year - b.year);
+    if (sortBy === 'az')       return base.sort((a, b) => a.title.localeCompare(b.title, 'id'));
     return base;
-  }, [allProducts, genre, search, tab]);
+  }, [allProducts, genre, search, tab, minPrice, maxPrice, sortBy, condition]);
 
   const cur = SLIDES[slide];
 
@@ -148,20 +163,120 @@ export default function HomePage() {
 
           {/* Products */}
           <div className="lg:col-span-2">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
-              <div className="flex bg-white border border-gray-200 rounded-xl p-1 shadow-sm w-fit">
-                {TABS.map(t => (
-                  <button key={t} onClick={() => setTab(t)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      tab === t ? 'bg-red-700 text-white shadow' : 'text-gray-500 hover:text-gray-800'
+            <div className="flex flex-col gap-3 mb-5">
+              {/* Row 1: Tabs + Search + Filter toggle */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex bg-white border border-gray-200 rounded-xl p-1 shadow-sm w-fit">
+                  {TABS.map(t => (
+                    <button key={t} onClick={() => setTab(t)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        tab === t ? 'bg-red-700 text-white shadow' : 'text-gray-500 hover:text-gray-800'
+                      }`}>
+                      {t === 'Flash Sale' ? '🔥 Flash Sale' : t}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 flex-1">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+                    <input type="text" placeholder="Cari judul atau pengarang..." value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-red-400 bg-white shadow-sm" />
+                    {search && (
+                      <button onClick={() => setSearch('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                    )}
+                  </div>
+                  <button onClick={() => setShowFilter(f => !f)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all shrink-0 ${
+                      showFilter || minPrice || maxPrice || condition !== 'semua' || sortBy !== 'relevan'
+                        ? 'border-red-500 bg-red-50 text-red-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                     }`}>
-                    {t === 'Flash Sale' ? '🔥 Flash Sale' : t}
+                    <span>⚙️</span>
+                    <span className="hidden sm:inline">Filter</span>
+                    {(minPrice || maxPrice || condition !== 'semua' || sortBy !== 'relevan') && (
+                      <span className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                        {[minPrice||maxPrice?1:0, condition!=='semua'?1:0, sortBy!=='relevan'?1:0].reduce((a,b)=>a+b,0)}
+                      </span>
+                    )}
                   </button>
-                ))}
+                </div>
               </div>
-              <input type="text" placeholder="Cari komik atau pengarang..." value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-red-400 bg-white shadow-sm flex-1 sm:max-w-52" />
+
+              {/* Row 2: Filter panel */}
+              {showFilter && (
+                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Price range */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-2">💰 Rentang Harga</p>
+                      <div className="flex items-center gap-2">
+                        <input type="text" placeholder="Min" value={minPrice}
+                          onChange={e => setMinPrice(e.target.value.replace(/\D/g, ''))}
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-red-400 min-w-0" />
+                        <span className="text-gray-400 text-xs shrink-0">–</span>
+                        <input type="text" placeholder="Max" value={maxPrice}
+                          onChange={e => setMaxPrice(e.target.value.replace(/\D/g, ''))}
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-red-400 min-w-0" />
+                      </div>
+                      <div className="flex gap-1.5 mt-2">
+                        {[['s/d 20rb','','20000'],['20–50rb','20000','50000'],['50rb+','50000','']].map(([label, mn, mx]) => (
+                          <button key={label} onClick={() => { setMinPrice(mn); setMaxPrice(mx); }}
+                            className={`text-[10px] px-2 py-1 rounded-lg border transition-colors ${
+                              minPrice===mn && maxPrice===mx ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            }`}>{label}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sort */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-2">↕️ Urutkan</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {([
+                          ['relevan','Relevan'], ['termurah','Termurah'], ['termahal','Termahal'],
+                          ['terbaru','Terbaru'], ['terlama','Terlama'], ['az','A–Z'],
+                        ] as [typeof sortBy, string][]).map(([val, label]) => (
+                          <button key={val} onClick={() => setSortBy(val)}
+                            className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${
+                              sortBy===val ? 'border-red-500 bg-red-50 text-red-700 font-semibold' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            }`}>{label}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Condition */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-2">📦 Kondisi</p>
+                      <div className="flex gap-1.5">
+                        {([['semua','Semua'],['baru','Baru'],['bekas','Bekas']] as [typeof condition, string][]).map(([val, label]) => (
+                          <button key={val} onClick={() => setCondition(val)}
+                            className={`text-[10px] px-3 py-1.5 rounded-lg border transition-colors ${
+                              condition===val ? 'border-red-500 bg-red-50 text-red-700 font-semibold' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                            }`}>{label}</button>
+                        ))}
+                      </div>
+                      <button onClick={() => { setMinPrice(''); setMaxPrice(''); setSortBy('relevan'); setCondition('semua'); }}
+                        className="mt-3 text-[10px] text-red-600 hover:underline">
+                        Reset semua filter
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Active filter chips */}
+              {(search || genre !== 'Semua' || minPrice || maxPrice || condition !== 'semua' || sortBy !== 'relevan') && (
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  <span className="text-xs text-gray-500">{displayProducts.length} komik ditemukan</span>
+                  {search && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">"{search}" <button onClick={() => setSearch('')} className="hover:text-red-600">✕</button></span>}
+                  {genre !== 'Semua' && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">{genre} <button onClick={() => setGenre('Semua')} className="hover:text-red-600">✕</button></span>}
+                  {(minPrice || maxPrice) && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">Harga <button onClick={() => { setMinPrice(''); setMaxPrice(''); }} className="hover:text-red-600">✕</button></span>}
+                  {condition !== 'semua' && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">{condition} <button onClick={() => setCondition('semua')} className="hover:text-red-600">✕</button></span>}
+                  {sortBy !== 'relevan' && <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">Urut: {sortBy} <button onClick={() => setSortBy('relevan')} className="hover:text-red-600">✕</button></span>}
+                </div>
+              )}
             </div>
 
             {displayProducts.length > 0 ? (

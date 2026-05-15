@@ -9,7 +9,10 @@ export interface Comic {
   previewImages?: string[];
   description: string;
   year: number;
-  pages: number;
+  pages?: number;
+  condition?: string;
+  rating?: number;
+  cover?: string;
   sellerId?: string;
   sellerName?: string;
 }

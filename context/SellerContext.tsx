@@ -33,6 +33,7 @@ function mapRow(row: Record<string, unknown>): Comic {
     description: (row.description as string) ?? '',
     condition:   (row.condition   as string) ?? '',
     rating:      (row.rating      as number) ?? 5.0,
+    pages:       (row.pages       as number) ?? 0,
     color:       '#ef4444',
   };
 }
