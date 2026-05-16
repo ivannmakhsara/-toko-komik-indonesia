@@ -48,24 +48,68 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function load() {
+      // 1. Fetch all products from Supabase
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
       console.log('[SellerContext] fetch:', { count: data?.length, error });
-      if (!error && data) {
-        setDbProducts(data.map(r => mapRow(r as Record<string, unknown>)));
-      }
+      const dbRows = (!error && data) ? data : [];
+      setDbProducts(dbRows.map(r => mapRow(r as Record<string, unknown>)));
+      const dbIds = new Set(dbRows.map(r => r.id as string));
 
+      // 2. Load localStorage products not already in Supabase
+      let localRows: Comic[] = [];
       try {
         const raw = localStorage.getItem(LOCAL_KEY);
-        if (raw) {
-          const parsed: Comic[] = JSON.parse(raw);
-          const dbIds = new Set((data ?? []).map(r => r.id as string));
-          setLocalProducts(parsed.filter(p => !dbIds.has(p.id)));
-        }
+        if (raw) localRows = JSON.parse(raw);
       } catch { /* ignore */ }
+      const unsynced = localRows.filter(p => !dbIds.has(p.id));
+      setLocalProducts(unsynced);
+
+      // 3. Auto-sync localStorage products to Supabase if user is logged in
+      if (unsynced.length > 0) {
+        const { data: { user: sbUser } } = await supabase.auth.getUser();
+        if (sbUser) {
+          const synced: string[] = [];
+          for (const p of unsynced) {
+            const { error: insertErr } = await supabase.from('products').insert({
+              id:          p.id,
+              seller_id:   sbUser.id,
+              seller_name: p.sellerName,
+              title:       p.title,
+              author:      p.author,
+              price:       p.price,
+              genre:       p.genre,
+              year:        p.year,
+              cover:       p.cover,
+              description: p.description,
+              condition:   p.condition,
+              rating:      p.rating ?? 5.0,
+              stock:       p.stock ?? null,
+            });
+            if (!insertErr) {
+              synced.push(p.id);
+              console.log('[SellerContext] synced to Supabase:', p.title);
+            } else {
+              console.error('[SellerContext] sync failed:', p.title, insertErr);
+            }
+          }
+          if (synced.length > 0) {
+            // Re-fetch and clear synced items from localStorage
+            const { data: refreshed } = await supabase
+              .from('products').select('*').order('created_at', { ascending: false });
+            if (refreshed) {
+              setDbProducts(refreshed.map(r => mapRow(r as Record<string, unknown>)));
+              const refreshedIds = new Set(refreshed.map(r => r.id as string));
+              const stillLocal = localRows.filter(p => !refreshedIds.has(p.id));
+              setLocalProducts(stillLocal);
+              localStorage.setItem(LOCAL_KEY, JSON.stringify(stillLocal));
+            }
+          }
+        }
+      }
 
       setLoading(false);
     }
