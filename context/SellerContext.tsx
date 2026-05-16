@@ -206,19 +206,23 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     if (dbProducts.find(p => p.id === id)) {
+      const rawCover = product.coverImage ?? product.cover ?? '';
+      const coverUrl = rawCover.startsWith('data:')
+        ? (await uploadCover(rawCover, id)) ?? rawCover
+        : rawCover;
       await supabase.from('products').update({
         title:       product.title,
         author:      product.author,
         price:       product.price,
         genre:       product.genre,
         year:        product.year,
-        cover:       product.cover,
+        cover:       coverUrl,
         description: product.description,
         condition:   product.condition,
         stock:       product.stock ?? null,
       }).eq('id', id);
       setDbProducts(prev => prev.map(p =>
-        p.id === id ? { ...product, id, sellerId: p.sellerId, sellerName: p.sellerName } : p
+        p.id === id ? { ...product, id, sellerId: p.sellerId, sellerName: p.sellerName, cover: coverUrl, coverImage: coverUrl } : p
       ));
       return;
     }
