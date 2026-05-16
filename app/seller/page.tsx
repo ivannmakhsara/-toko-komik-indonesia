@@ -27,9 +27,11 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
 };
 
 export default function SellerDashboard() {
-  const { sellerProducts, deleteAllProducts } = useSeller();
+  const { sellerProducts, deleteAllProducts, syncToSupabase } = useSeller();
   const { unreadForSeller } = useChat();
   const { user } = useAuth();
+  const [syncing,     setSyncing]     = useState(false);
+  const [syncResult,  setSyncResult]  = useState<{ ok: number; fail: number; errors: string[] } | null>(null);
   const [orders,          setOrders]          = useState<Order[]>([]);
   const [showRevenue,     setShowRevenue]     = useState(false);
   const [showDeleteStore, setShowDeleteStore] = useState(false);
@@ -352,6 +354,26 @@ export default function SellerDashboard() {
               className="w-full py-2 flex items-center justify-center gap-1.5 rounded-[10px] border border-white/[0.08] text-white/40 text-xs font-semibold hover:border-white/[0.15] hover:text-white/60 transition-colors">
               Lihat Tampilan Toko →
             </Link>
+          )}
+
+          {/* Sync to Supabase */}
+          <button
+            disabled={syncing}
+            onClick={async () => {
+              setSyncing(true);
+              setSyncResult(null);
+              const res = await syncToSupabase();
+              setSyncResult(res);
+              setSyncing(false);
+            }}
+            className="w-full py-2 rounded-[10px] border border-blue-500/25 text-blue-400/70 text-xs font-semibold hover:border-blue-500/40 hover:text-blue-400 hover:bg-blue-500/[0.05] transition-colors disabled:opacity-50">
+            {syncing ? '⏳ Menyinkronkan...' : '☁️ Sync Produk ke Server'}
+          </button>
+          {syncResult && (
+            <div className={`text-xs rounded-[10px] px-3 py-2 ${syncResult.fail === 0 && syncResult.ok > 0 ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+              {syncResult.ok > 0 && <p>✅ {syncResult.ok} produk berhasil disinkronkan</p>}
+              {syncResult.errors.map((e, i) => <p key={i} className="mt-1 leading-snug">❌ {e}</p>)}
+            </div>
           )}
 
           {/* Delete store */}

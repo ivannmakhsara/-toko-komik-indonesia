@@ -16,6 +16,7 @@ interface SellerContextType {
   updateProduct:     (id: string, product: Omit<Comic, 'id' | 'sellerId' | 'sellerName'>) => Promise<void>;
   deleteProduct:     (id: string) => Promise<void>;
   deleteAllProducts: () => Promise<void>;
+  syncToSupabase:    () => Promise<{ ok: number; fail: number; errors: string[] }>;
 }
 
 const SellerContext = createContext<SellerContextType | null>(null);
@@ -252,6 +253,60 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
   }
 
+  async function syncToSupabase(): Promise<{ ok: number; fail: number; errors: string[] }> {
+    const result = { ok: 0, fail: 0, errors: [] as string[] };
+    const { data: { user: sbUser } } = await supabase.auth.getUser();
+    if (!sbUser) { result.errors.push('Tidak ada sesi Supabase — coba login ulang'); return result; }
+
+    const { data: existing } = await supabase.from('products').select('id');
+    const existingIds = new Set((existing ?? []).map(r => r.id as string));
+
+    const toSync = localProducts.filter(p => !existingIds.has(p.id));
+    if (toSync.length === 0) { result.errors.push('Tidak ada produk baru di localStorage untuk disinkronkan'); return result; }
+
+    for (const p of toSync) {
+      const rawCover = p.coverImage ?? p.cover ?? '';
+      const coverUrl = rawCover.startsWith('data:')
+        ? (await uploadCover(rawCover, p.id)) ?? ''
+        : rawCover;
+
+      const { error } = await supabase.from('products').insert({
+        id:          p.id,
+        seller_id:   sbUser.id,
+        seller_name: p.sellerName,
+        title:       p.title,
+        author:      p.author ?? '',
+        price:       p.price,
+        genre:       p.genre,
+        year:        p.year,
+        cover:       coverUrl,
+        description: p.description,
+        condition:   p.condition ?? '',
+        rating:      p.rating ?? 5.0,
+        stock:       p.stock ?? null,
+      });
+
+      if (error) {
+        result.fail++;
+        result.errors.push(`"${p.title}": ${error.message}`);
+      } else {
+        result.ok++;
+      }
+    }
+
+    if (result.ok > 0) {
+      const { data: refreshed } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (refreshed) {
+        setDbProducts(refreshed.map(r => mapRow(r as Record<string, unknown>)));
+        const refreshedIds = new Set(refreshed.map(r => r.id as string));
+        const stillLocal = localProducts.filter(p => !refreshedIds.has(p.id));
+        setLocalProducts(stillLocal);
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(stillLocal));
+      }
+    }
+    return result;
+  }
+
   async function deleteAllProducts() {
     if (!user) return;
     const { data: { user: sbUser } } = await supabase.auth.getUser();
@@ -272,7 +327,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
   const allProducts = [...allDbAndLocal, ...staticComics];
 
   return (
-    <SellerContext.Provider value={{ sellerProducts, allProducts, loading, addProduct, updateProduct, deleteProduct, deleteAllProducts }}>
+    <SellerContext.Provider value={{ sellerProducts, allProducts, loading, addProduct, updateProduct, deleteProduct, deleteAllProducts, syncToSupabase }}>
       {children}
     </SellerContext.Provider>
   );
