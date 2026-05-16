@@ -17,6 +17,7 @@ interface AuthCtx {
   login:            (email: string, password: string) => Promise<string | null>;
   register:         (name: string, email: string, password: string, role: 'buyer' | 'seller') => Promise<{ error: string | null; needsVerification: boolean }>;
   loginWithGoogle:  (email: string, name: string, role?: 'buyer' | 'seller') => void;
+  updateName:       (name: string) => Promise<void>;
   upgradeToSeller:  () => Promise<void>;
   logout:           () => Promise<void>;
   deleteAccount:    () => Promise<void>;
@@ -109,6 +110,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
   }
 
+  async function updateName(name: string): Promise<void> {
+    if (!user || !name.trim()) return;
+    const trimmed = name.trim();
+
+    const { data: { user: sbUser } } = await supabase.auth.getUser();
+    if (sbUser) {
+      await supabase.auth.updateUser({ data: { ...sbUser.user_metadata, name: trimmed } });
+    }
+
+    const stored = JSON.parse(localStorage.getItem('toko-users') || '[]');
+    const updated = stored.map((u: { email: string }) =>
+      u.email === user.email ? { ...u, name: trimmed } : u
+    );
+    localStorage.setItem('toko-users', JSON.stringify(updated));
+    const newUser = { ...user, name: trimmed };
+    localStorage.setItem('toko-session', JSON.stringify(newUser));
+    setUser(newUser);
+  }
+
   async function upgradeToSeller(): Promise<void> {
     if (!user || user.role === 'seller') return;
 
@@ -150,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, upgradeToSeller, logout, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, updateName, upgradeToSeller, logout, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

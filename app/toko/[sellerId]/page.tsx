@@ -23,6 +23,29 @@ export default function StorePage() {
   const [search, setSearch] = useState('');
   const [following, setFollowing] = useState(false);
 
+  /* ── Follow persistence ── */
+  const followKey = user ? `tki-follows-${user.id}` : null;
+
+  useEffect(() => {
+    if (!followKey || !sellerId) return;
+    try {
+      const list: string[] = JSON.parse(localStorage.getItem(followKey) || '[]');
+      setFollowing(list.includes(sellerId));
+    } catch { /* ignore */ }
+  }, [followKey, sellerId]);
+
+  function handleToggleFollow() {
+    if (!followKey || !sellerId) return;
+    try {
+      const list: string[] = JSON.parse(localStorage.getItem(followKey) || '[]');
+      const next = list.includes(sellerId)
+        ? list.filter(id => id !== sellerId)
+        : [...list, sellerId];
+      localStorage.setItem(followKey, JSON.stringify(next));
+      setFollowing(next.includes(sellerId));
+    } catch { /* ignore */ }
+  }
+
   const storeProducts = useMemo(
     () => allProducts.filter(p => p.sellerId === sellerId),
     [allProducts, sellerId]
@@ -94,22 +117,29 @@ export default function StorePage() {
                   <p className="text-sm text-white/35 mt-0.5">📍 Indonesia</p>
 
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <button
-                      onClick={() => setFollowing(v => !v)}
-                      className={`px-5 py-2 rounded-[12px] text-sm font-semibold border-2 transition-all ${
-                        following
-                          ? 'bg-white/[0.06] border-white/[0.12] text-white/50'
-                          : 'bg-transparent border-[#D90429] text-[#D90429] hover:bg-[#D90429]/10'
-                      }`}
-                    >
-                      {following ? '✓ Following' : '+ Follow'}
-                    </button>
-                    <button
-                      onClick={() => openChat(true)}
-                      className="px-5 py-2 rounded-[12px] text-sm font-semibold border border-white/[0.12] text-white/50 hover:border-white/25 hover:text-white/70 transition-colors"
-                    >
-                      💬 Chat Penjual
-                    </button>
+                    {!isOwner && (
+                      <>
+                        {/* Follow button: only for logged-in buyers */}
+                        {user && user.role !== 'seller' && (
+                          <button
+                            onClick={handleToggleFollow}
+                            className={`px-5 py-2 rounded-[12px] text-sm font-semibold border-2 transition-all ${
+                              following
+                                ? 'bg-white/[0.06] border-white/[0.12] text-white/50'
+                                : 'bg-transparent border-[#D90429] text-[#D90429] hover:bg-[#D90429]/10'
+                            }`}
+                          >
+                            {following ? '✓ Following' : '+ Follow'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openChat(true)}
+                          className="px-5 py-2 rounded-[12px] text-sm font-semibold border border-white/[0.12] text-white/50 hover:border-white/25 hover:text-white/70 transition-colors"
+                        >
+                          💬 Chat Penjual
+                        </button>
+                      </>
+                    )}
                     {isOwner && (
                       <Link href="/seller"
                         className="px-5 py-2 rounded-[12px] text-sm font-semibold bg-[#D90429] text-white hover:bg-[#B0021F] transition-colors">

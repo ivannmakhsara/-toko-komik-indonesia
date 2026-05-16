@@ -13,12 +13,30 @@ const STATUSES: { status: OrderStatus; icon: string; label: string }[] = [
   { status: 'Sampai',        icon: '📍', label: 'Sampai\nTujuan'      },
 ];
 
+interface FollowUpdate {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  productTitle: string;
+  date: string;
+  read: boolean;
+}
+
 export default function NotificationBell() {
   const { user } = useAuth();
   const { unreadForSeller, unreadForUser, messages, markAllRead, setIsOpen: openChat } = useChat();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<'transaksi' | 'update'>('transaksi');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [followUpdates, setFollowUpdates] = useState<FollowUpdate[]>([]);
+
+  useEffect(() => {
+    if (!user || user.role === 'seller') return;
+    const key = `tki-follow-updates-${user.id}`;
+    try {
+      setFollowUpdates(JSON.parse(localStorage.getItem(key) || '[]'));
+    } catch { /* ignore */ }
+  }, [open, user]);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,8 +64,9 @@ export default function NotificationBell() {
     statusCounts[s.status] = relevantOrders.filter(o => o.status === s.status).length;
   });
 
-  const unreadChat = isSeller ? unreadForSeller : unreadForUser;
-  const totalBadge = Object.values(statusCounts).reduce((a, b) => a + (b ?? 0), 0) + unreadChat;
+  const unreadChat    = isSeller ? unreadForSeller : unreadForUser;
+  const unreadFollows = !isSeller ? followUpdates.filter(u => !u.read).length : 0;
+  const totalBadge    = Object.values(statusCounts).reduce((a, b) => a + (b ?? 0), 0) + unreadChat + unreadFollows;
 
   const unreadMsgs = messages.filter(m =>
     isSeller ? (m.sender === 'user' && !m.read) : (m.sender === 'seller' && !m.read)
@@ -55,6 +74,14 @@ export default function NotificationBell() {
 
   function handleMarkAllRead() {
     markAllRead(isSeller ? 'seller' : 'user');
+    if (!isSeller && user) {
+      const key = `tki-follow-updates-${user.id}`;
+      try {
+        const updated = followUpdates.map(u => ({ ...u, read: true }));
+        localStorage.setItem(key, JSON.stringify(updated));
+        setFollowUpdates(updated);
+      } catch { /* ignore */ }
+    }
   }
 
   function handleOpenChat() {
@@ -94,9 +121,9 @@ export default function NotificationBell() {
                 }`}
               >
                 {t === 'transaksi' ? 'Transaksi' : 'Update'}
-                {t === 'update' && unreadChat > 0 && (
+                {t === 'update' && (unreadChat + unreadFollows) > 0 && (
                   <span className="ml-1.5 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5">
-                    {unreadChat}
+                    {unreadChat + unreadFollows}
                   </span>
                 )}
               </button>
@@ -187,16 +214,45 @@ export default function NotificationBell() {
               </div>
             </div>
           ) : (
-            /* Update tab – messages */
-            <div className="py-3 min-h-[160px]">
-              {unreadMsgs.length === 0 ? (
+            /* Update tab – chat messages + follow updates */
+            <div className="py-3 min-h-[160px] max-h-72 overflow-y-auto">
+              {/* Follow updates (buyers only) */}
+              {!isSeller && followUpdates.length > 0 && (
+                <div className="mb-2">
+                  <p className="px-4 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Toko Diikuti</p>
+                  {followUpdates.slice(0, 5).map(u => (
+                    <Link
+                      key={u.id}
+                      href={`/toko/${u.sellerId}`}
+                      onClick={() => setOpen(false)}
+                      className={`flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors ${!u.read ? 'bg-red-50/60' : ''}`}
+                    >
+                      <div className="w-8 h-8 bg-[#D90429] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {u.sellerName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 truncate">{u.sellerName}</p>
+                        <p className="text-xs text-gray-400 truncate">Produk baru: {u.productTitle}</p>
+                      </div>
+                      {!u.read && <span className="w-2 h-2 bg-red-600 rounded-full shrink-0 mt-1.5" />}
+                    </Link>
+                  ))}
+                  {unreadMsgs.length > 0 && <div className="border-t border-gray-100 mx-4 my-1" />}
+                </div>
+              )}
+
+              {/* Chat messages */}
+              {unreadMsgs.length === 0 && (!(!isSeller && followUpdates.length > 0)) ? (
                 <div className="flex flex-col items-center py-8 px-4 text-center">
                   <p className="text-3xl mb-2">💬</p>
-                  <p className="font-semibold text-gray-700 text-sm mb-1">Tidak ada pesan baru</p>
-                  <p className="text-xs text-gray-400">Semua pesan sudah terbaca</p>
+                  <p className="font-semibold text-gray-700 text-sm mb-1">Tidak ada update baru</p>
+                  <p className="text-xs text-gray-400">Ikuti toko favoritmu untuk notifikasi produk baru</p>
                 </div>
               ) : (
                 <div className="flex flex-col">
+                  {unreadMsgs.length > 0 && (
+                    <p className="px-4 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pesan</p>
+                  )}
                   {unreadMsgs.map(m => (
                     <button
                       key={m.id}

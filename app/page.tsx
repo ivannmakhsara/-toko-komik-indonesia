@@ -184,7 +184,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════
           HERO
       ══════════════════════════════════════════ */}
-      <section className="relative overflow-hidden" style={{ minHeight: 'clamp(340px, 45vh, 440px)' }}>
+      <section className="relative overflow-hidden" style={{ minHeight: 'clamp(260px, 40vh, 440px)' }}>
 
         {/* Atmospheric BG */}
         <div className="absolute inset-0 pointer-events-none">
@@ -196,7 +196,7 @@ export default function HomePage() {
             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.3) 1px,transparent 1px)', backgroundSize: '40px 40px' }} />
         </div>
 
-        <div className="relative h-full flex items-center px-6 lg:px-10 py-10 gap-8">
+        <div className="relative h-full flex items-center px-4 sm:px-6 lg:px-10 py-6 sm:py-10 gap-8">
 
           {/* Left — editorial text */}
           <div className="flex-1 z-10 max-w-[480px]">
@@ -207,10 +207,10 @@ export default function HomePage() {
             <h1 className="font-display font-bold text-[clamp(36px,5vw,68px)] leading-[0.9] tracking-[-0.03em] text-[#F2F2F0] mb-4">
               Jagat<br />Nusantara
             </h1>
-            <p className="text-white/45 text-[14px] leading-relaxed mb-7 max-w-[340px]">
+            <p className="text-white/45 text-[13px] sm:text-[14px] leading-relaxed mb-4 sm:mb-7 max-w-[340px] hidden sm:block">
               Para pelindung tanah air bangkit. Temukan kisah heroik dari semesta komik asli Indonesia.
             </p>
-            <div className="flex items-center gap-3 flex-wrap mb-8">
+            <div className="flex items-center gap-3 flex-wrap mb-4 sm:mb-8">
               <a href="#konten"
                 className="flex items-center gap-2 bg-[#D90429] text-white font-semibold text-[13px] px-6 py-2.5 rounded-[12px] hover:bg-[#B0021F] active:scale-[0.97] transition-all shadow-[0_0_24px_rgba(217,4,41,0.35)]">
                 Jelajahi Universe
@@ -265,7 +265,7 @@ export default function HomePage() {
           )}
 
           {/* Flash sale card */}
-          <div className="absolute bottom-4 right-4 sm:right-6 bg-[#0D0D0F]/85 backdrop-blur-md border border-white/[0.09] rounded-[14px] px-4 py-3 flex items-center gap-4 z-30">
+          <div className="hidden sm:flex absolute bottom-4 right-4 sm:right-6 bg-[#0D0D0F]/85 backdrop-blur-md border border-white/[0.09] rounded-[14px] px-4 py-3 items-center gap-4 z-30">
             <div>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-sm">🔥</span>
@@ -285,10 +285,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Mobile flash sale strip */}
+      <div className="sm:hidden flex items-center justify-between gap-3 bg-[#D90429]/10 border-b border-[#D90429]/20 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="text-base">🔥</span>
+          <div>
+            <p className="text-[12px] font-bold text-white/90 leading-none">Flash Sale — Diskon Hingga 50%</p>
+            <p className="text-[10px] text-white/35 mt-0.5">Berakhir dalam</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-0.5 font-display font-bold text-[18px] text-[#D90429] leading-none shrink-0">
+          <span>{h}</span><span className="text-[#D90429]/40 text-sm">:</span>
+          <span>{m}</span><span className="text-[#D90429]/40 text-sm">:</span>
+          <span>{s}</span>
+        </div>
+      </div>
+
       {/* ══════════════════════════════════════════
           CONTENT
       ══════════════════════════════════════════ */}
-      <div className="px-6 lg:px-8 pb-16 space-y-10" id="konten">
+      <div className="px-4 sm:px-6 lg:px-8 pb-16 space-y-10" id="konten">
 
         {/* ── Genre tabs ── */}
         <div className="flex items-center gap-2 overflow-x-auto pt-6 pb-1" style={{ scrollbarWidth: 'none' }}>

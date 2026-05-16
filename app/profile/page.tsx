@@ -184,7 +184,7 @@ function OrderCard({ order, onCancelClick, onConfirmReceived, onWriteReview, onD
 }
 
 function ProfileContent() {
-  const { user, loading, upgradeToSeller, deleteAccount } = useAuth();
+  const { user, loading, updateName, upgradeToSeller, deleteAccount } = useAuth();
   const { addToCart } = useCart();
   const { wishlist, removeFromWishlist } = useWishlist();
   const [upgrading, setUpgrading] = useState(false);
@@ -413,7 +413,7 @@ function ProfileContent() {
               <div className="flex-1 flex gap-2 items-center">
                 <input value={editName} onChange={e => setEditName(e.target.value)}
                   className="flex-1 bg-white/[0.05] border border-white/[0.10] rounded-[10px] px-3 py-1.5 text-sm text-white/80 focus:outline-none focus:border-white/25" />
-                <button onClick={() => setEditing(false)}
+                <button onClick={async () => { await updateName(editName); setEditing(false); }}
                   className="bg-[#D90429] text-white px-3 py-1.5 rounded-[10px] text-sm hover:bg-[#B0021F] transition-colors">Simpan</button>
                 <button onClick={() => setEditing(false)} className="text-white/30 text-sm hover:text-white/60 transition-colors">Batal</button>
               </div>

@@ -12,7 +12,7 @@ export default function ContentWrapper({ children }: { children: ReactNode }) {
   return (
     <div className={`flex-1 flex flex-col min-h-screen ${isSeller ? '' : 'lg:ml-[168px]'}`}>
       {!isSeller && <TopBar />}
-      <main className="flex-1">{children}</main>
+      <main className={`flex-1 ${isSeller ? '' : 'pb-16 lg:pb-0'}`}>{children}</main>
       {!isSeller && <Footer />}
     </div>
   );

@@ -37,6 +37,49 @@ export default function SellerDashboard() {
   const [wishlistCount,   setWishlistCount]   = useState(0);
   const [lastUpdated,     setLastUpdated]     = useState('');
 
+  /* Withdrawal */
+  const [showWithdraw,   setShowWithdraw]   = useState(false);
+  const [withdrawStep,   setWithdrawStep]   = useState<'form' | 'confirm' | 'done'>('form');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawBank,   setWithdrawBank]   = useState('BCA');
+  const [withdrawAcct,   setWithdrawAcct]   = useState('');
+  const [withdrawName,   setWithdrawName]   = useState('');
+  const [withdrawHistory, setWithdrawHistory] = useState<{ id: string; amount: number; bank: string; acct: string; date: string }[]>([]);
+
+  const WITHDRAW_KEY = user ? `tki-withdrawals-${user.id}` : null;
+
+  useEffect(() => {
+    if (!WITHDRAW_KEY) return;
+    try { setWithdrawHistory(JSON.parse(localStorage.getItem(WITHDRAW_KEY) || '[]')); } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [WITHDRAW_KEY]);
+
+  function handleWithdrawSubmit() {
+    const amt = parseInt(withdrawAmount.replace(/\D/g, ''), 10);
+    if (!amt || amt < 10000) { alert('Minimal pencairan Rp 10.000'); return; }
+    if (amt > totalRevenue)  { alert('Jumlah melebihi saldo tersedia'); return; }
+    if (!withdrawAcct.trim() || !withdrawName.trim()) { alert('Lengkapi data rekening'); return; }
+    setWithdrawStep('confirm');
+  }
+
+  function handleWithdrawConfirm() {
+    if (!WITHDRAW_KEY) return;
+    const amt = parseInt(withdrawAmount.replace(/\D/g, ''), 10);
+    const entry = { id: `wd-${Date.now()}`, amount: amt, bank: withdrawBank, acct: withdrawAcct, date: new Date().toISOString() };
+    const next = [entry, ...withdrawHistory];
+    localStorage.setItem(WITHDRAW_KEY, JSON.stringify(next));
+    setWithdrawHistory(next);
+    setWithdrawStep('done');
+  }
+
+  function closeWithdraw() {
+    setShowWithdraw(false);
+    setWithdrawStep('form');
+    setWithdrawAmount('');
+    setWithdrawAcct('');
+    setWithdrawName('');
+  }
+
   useEffect(() => {
     getOrders().then(setOrders);
     setLastUpdated(
@@ -90,18 +133,18 @@ export default function SellerDashboard() {
   ];
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex flex-col lg:flex-row lg:h-full lg:overflow-hidden">
 
       {/* ── Main column ── */}
-      <div className="flex-1 overflow-y-auto min-w-0">
-        <div className="p-6 space-y-5 max-w-2xl">
+      <div className="flex-1 lg:overflow-y-auto min-w-0">
+        <div className="p-4 sm:p-6 space-y-5 max-w-2xl">
 
           {/* Activity cards */}
           <section>
             <p className="text-[11px] text-white/25 mb-3 font-semibold uppercase tracking-widest">
               Aktivitas yang perlu kamu pantau
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
               {ACTIVITY.map(a => (
                 <Link key={a.label} href={a.href}
                   className="bg-[#111113] border border-white/[0.07] rounded-[14px] p-4 hover:border-white/[0.12] hover:bg-white/[0.04] transition-all">
@@ -127,14 +170,24 @@ export default function SellerDashboard() {
               <div className="grid grid-cols-3 gap-5 mb-6 pb-6 border-b border-white/[0.06]">
                 <div>
                   <p className="text-xs text-white/30 mb-1">Total Pendapatan</p>
-                  <button onClick={() => setShowRevenue(true)} className="text-left group">
-                    <p className="text-xl font-bold text-[#F2F2F0] group-hover:text-[#D90429] transition-colors">
-                      {formatRupiah(totalRevenue)}
-                    </p>
-                    <p className="text-xs text-white/25 mt-0.5">
-                      dari {completedOrders.length} pesanan selesai · <span className="text-[#D90429]/60 group-hover:underline">lihat rincian</span>
-                    </p>
-                  </button>
+                  <div className="flex items-start gap-3">
+                    <button onClick={() => setShowRevenue(true)} className="text-left group">
+                      <p className="text-xl font-bold text-[#F2F2F0] group-hover:text-[#D90429] transition-colors">
+                        {formatRupiah(totalRevenue)}
+                      </p>
+                      <p className="text-xs text-white/25 mt-0.5">
+                        dari {completedOrders.length} pesanan selesai · <span className="text-[#D90429]/60 group-hover:underline">lihat rincian</span>
+                      </p>
+                    </button>
+                    {totalRevenue > 0 && (
+                      <button
+                        onClick={() => { setShowWithdraw(true); setWithdrawStep('form'); }}
+                        className="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/25 text-green-400 hover:bg-green-500/20 transition-colors mt-0.5"
+                      >
+                        Cairkan
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs text-white/30 mb-1">Produk Terdaftar</p>
@@ -263,7 +316,7 @@ export default function SellerDashboard() {
       </div>
 
       {/* ── Right panel ── */}
-      <div className="w-64 shrink-0 border-l border-white/[0.05] overflow-y-auto">
+      <div className="lg:w-64 lg:shrink-0 border-t lg:border-t-0 lg:border-l border-white/[0.05] lg:overflow-y-auto">
         <div className="p-4 space-y-5">
 
           {/* Store card */}
@@ -381,6 +434,171 @@ export default function SellerDashboard() {
                 className="flex-1 py-2.5 rounded-[10px] bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50">
                 {deletingStore ? 'Menghapus...' : 'Ya, Hapus Toko'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdrawal modal */}
+      {showWithdraw && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={closeWithdraw}>
+          <div className="bg-[#111113] border border-white/[0.10] rounded-[20px] w-full max-w-md flex flex-col"
+            onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-white/[0.07] flex items-center justify-between">
+              <h2 className="font-bold text-white/80">
+                {withdrawStep === 'form' ? 'Cairkan Saldo' : withdrawStep === 'confirm' ? 'Konfirmasi Pencairan' : 'Pencairan Berhasil'}
+              </h2>
+              <button onClick={closeWithdraw} className="text-white/30 hover:text-white/60 transition-colors">✕</button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {withdrawStep === 'form' && (
+                <>
+                  {/* Saldo */}
+                  <div className="bg-green-500/5 border border-green-500/15 rounded-[12px] px-4 py-3">
+                    <p className="text-xs text-green-400/60 mb-0.5">Saldo tersedia</p>
+                    <p className="text-xl font-bold text-green-400">{formatRupiah(totalRevenue)}</p>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-xs text-white/40 mb-1.5 font-medium">Jumlah pencairan</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">Rp</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={withdrawAmount}
+                        onChange={e => {
+                          const raw = e.target.value.replace(/\D/g, '');
+                          setWithdrawAmount(raw ? parseInt(raw, 10).toLocaleString('id-ID') : '');
+                        }}
+                        className="w-full bg-white/[0.05] border border-white/[0.10] rounded-[10px] pl-9 pr-4 py-2.5 text-sm text-white/80 placeholder-white/20 focus:outline-none focus:border-white/25"
+                      />
+                    </div>
+                    <p className="text-[11px] text-white/25 mt-1">Minimal Rp 10.000</p>
+                  </div>
+
+                  {/* Bank */}
+                  <div>
+                    <label className="block text-xs text-white/40 mb-1.5 font-medium">Bank / e-Wallet</label>
+                    <select
+                      value={withdrawBank}
+                      onChange={e => setWithdrawBank(e.target.value)}
+                      className="w-full bg-white/[0.05] border border-white/[0.10] rounded-[10px] px-3 py-2.5 text-sm text-white/80 focus:outline-none focus:border-white/25 appearance-none"
+                    >
+                      {['BCA', 'Mandiri', 'BNI', 'BRI', 'GoPay', 'OVO', 'Dana'].map(b => (
+                        <option key={b} value={b} className="bg-[#111113]">{b}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Account number */}
+                  <div>
+                    <label className="block text-xs text-white/40 mb-1.5 font-medium">Nomor rekening / akun</label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: 1234567890"
+                      value={withdrawAcct}
+                      onChange={e => setWithdrawAcct(e.target.value)}
+                      className="w-full bg-white/[0.05] border border-white/[0.10] rounded-[10px] px-3 py-2.5 text-sm text-white/80 placeholder-white/20 focus:outline-none focus:border-white/25"
+                    />
+                  </div>
+
+                  {/* Account holder name */}
+                  <div>
+                    <label className="block text-xs text-white/40 mb-1.5 font-medium">Nama pemilik rekening</label>
+                    <input
+                      type="text"
+                      placeholder="Sesuai rekening bank"
+                      value={withdrawName}
+                      onChange={e => setWithdrawName(e.target.value)}
+                      className="w-full bg-white/[0.05] border border-white/[0.10] rounded-[10px] px-3 py-2.5 text-sm text-white/80 placeholder-white/20 focus:outline-none focus:border-white/25"
+                    />
+                  </div>
+
+                  {/* Riwayat */}
+                  {withdrawHistory.length > 0 && (
+                    <div>
+                      <p className="text-[11px] text-white/25 font-semibold uppercase tracking-widest mb-2">Riwayat Pencairan</p>
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                        {withdrawHistory.map(w => (
+                          <div key={w.id} className="flex justify-between items-center text-xs py-1.5 border-b border-white/[0.05]">
+                            <div>
+                              <span className="text-white/50 font-medium">{w.bank} · {w.acct}</span>
+                              <p className="text-white/25 mt-0.5">{new Date(w.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                            </div>
+                            <span className="text-green-400 font-semibold">{formatRupiah(w.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleWithdrawSubmit}
+                    className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-[12px] text-sm transition-colors"
+                  >
+                    Lanjut
+                  </button>
+                </>
+              )}
+
+              {withdrawStep === 'confirm' && (
+                <>
+                  <div className="bg-white/[0.03] border border-white/[0.07] rounded-[12px] divide-y divide-white/[0.05]">
+                    {[
+                      { label: 'Jumlah', val: formatRupiah(parseInt(withdrawAmount.replace(/\D/g, ''), 10) || 0) },
+                      { label: 'Bank / e-Wallet', val: withdrawBank },
+                      { label: 'Nomor Rekening', val: withdrawAcct },
+                      { label: 'Atas Nama', val: withdrawName },
+                    ].map(r => (
+                      <div key={r.label} className="flex justify-between text-sm px-4 py-3">
+                        <span className="text-white/35">{r.label}</span>
+                        <span className="text-white/70 font-medium">{r.val}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-white/30 text-center">
+                    Dana akan diproses dalam 1–3 hari kerja.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setWithdrawStep('form')}
+                      className="flex-1 py-2.5 rounded-[10px] border border-white/[0.10] text-white/45 hover:text-white/70 text-sm transition-colors"
+                    >
+                      Kembali
+                    </button>
+                    <button
+                      onClick={handleWithdrawConfirm}
+                      className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-[10px] text-sm transition-colors"
+                    >
+                      Konfirmasi
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {withdrawStep === 'done' && (
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-green-500/10 border border-green-500/25 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">✅</div>
+                  <h3 className="font-bold text-white/80 mb-1">Permintaan Dikirim!</h3>
+                  <p className="text-sm text-white/40 mb-1">
+                    {formatRupiah(parseInt(withdrawAmount.replace(/\D/g, ''), 10) || 0)} ke {withdrawBank} {withdrawAcct}
+                  </p>
+                  <p className="text-xs text-white/25 mb-6">Diproses dalam 1–3 hari kerja</p>
+                  <button
+                    onClick={closeWithdraw}
+                    className="px-8 py-2.5 bg-[#D90429] hover:bg-[#B0021F] text-white font-semibold rounded-[12px] text-sm transition-colors"
+                  >
+                    Selesai
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

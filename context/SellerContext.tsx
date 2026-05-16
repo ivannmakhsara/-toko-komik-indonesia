@@ -73,6 +73,30 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
 
   const allDbAndLocal = [...dbProducts, ...localProducts];
 
+  function notifyFollowers(sellerId: string, sellerName: string, productTitle: string) {
+    /* Scan all tki-follows-* keys and write an update for each follower */
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key?.startsWith('tki-follows-')) continue;
+        const buyerId = key.replace('tki-follows-', '');
+        const followed: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!followed.includes(sellerId)) continue;
+        const updKey = `tki-follow-updates-${buyerId}`;
+        const updates = JSON.parse(localStorage.getItem(updKey) || '[]');
+        updates.unshift({
+          id: `upd-${Date.now()}`,
+          sellerId,
+          sellerName,
+          productTitle,
+          date: new Date().toISOString(),
+          read: false,
+        });
+        localStorage.setItem(updKey, JSON.stringify(updates.slice(0, 50)));
+      }
+    } catch { /* ignore */ }
+  }
+
   async function addProduct(product: Omit<Comic, 'id' | 'sellerId' | 'sellerName'>) {
     if (!user) return;
     const id = `seller-${Date.now()}`;
@@ -97,6 +121,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
       if (!error) {
         const newProduct: Comic = { ...product, id, sellerId: sbUser.id, sellerName: user.name };
         setDbProducts(prev => [newProduct, ...prev]);
+        notifyFollowers(sbUser.id, user.name, product.title);
         return;
       }
     }
@@ -106,6 +131,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
     const updated = [newProduct, ...localProducts];
     setLocalProducts(updated);
     localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
+    notifyFollowers(user.id, user.name, product.title);
   }
 
   async function updateProduct(id: string, product: Omit<Comic, 'id' | 'sellerId' | 'sellerName'>) {

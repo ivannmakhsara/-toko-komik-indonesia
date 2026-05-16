@@ -32,8 +32,9 @@ export default function ProductPage() {
     getOrders().then(orders => {
       let sold = 0; let ratings = 0;
       orders.forEach(o => {
+        if (o.status !== 'Selesai') return;
         const item = o.items.find(i => i.title === comic.title);
-        if (item) { sold += item.quantity; if (o.status === 'Selesai') ratings++; }
+        if (item) { sold += item.quantity; ratings++; }
       });
       setSoldCount(sold);
       setRatingCount(ratings);

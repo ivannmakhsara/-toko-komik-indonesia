@@ -6,10 +6,11 @@ import { SellerProvider }   from '@/context/SellerContext';
 import { ChatProvider }     from '@/context/ChatContext';
 import { AuthProvider }     from '@/context/AuthContext';
 import { WishlistProvider } from '@/context/WishlistContext';
-import Sidebar         from '@/components/Sidebar';
-import ContentWrapper  from '@/components/ContentWrapper';
-import ChatWidget      from '@/components/ChatWidget';
-import GoogleProvider  from '@/components/GoogleProvider';
+import Sidebar            from '@/components/Sidebar';
+import ContentWrapper     from '@/components/ContentWrapper';
+import ChatWidget         from '@/components/ChatWidget';
+import GoogleProvider     from '@/components/GoogleProvider';
+import MobileBottomNav    from '@/components/MobileBottomNav';
 
 const displayFont = Space_Grotesk({
   subsets: ['latin'],
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </ContentWrapper>
           </div>
           <ChatWidget />
+          <MobileBottomNav />
         </CartProvider>
         </WishlistProvider>
         </SellerProvider>
