@@ -204,7 +204,8 @@ export default function TopBar() {
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-1.5">
+          /* Desktop: full Masuk + Daftar buttons; mobile: hidden (MobileBottomNav handles it) */
+          <div className="hidden sm:flex items-center gap-1.5">
             <Link href="/login"
               className="bg-[#D90429] text-white text-[12px] font-semibold px-3 py-1.5 rounded-[9px] hover:bg-[#B0021F] active:scale-95 transition-all duration-150">
               Masuk

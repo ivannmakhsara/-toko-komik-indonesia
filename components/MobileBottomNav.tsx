@@ -54,44 +54,77 @@ export default function MobileBottomNav() {
         </svg>
       ),
     },
-    {
-      label: 'Profil',
-      href: user ? '/profile' : '/login',
-      active: pathname.startsWith('/profile') || pathname.startsWith('/login'),
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
-          <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ),
-    },
-  ];
+    user
+      ? {
+          label: 'Profil',
+          href: '/profile',
+          active: pathname.startsWith('/profile'),
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ),
+        }
+      : {
+          label: 'Masuk',
+          href: '/login',
+          active: pathname.startsWith('/login') || pathname.startsWith('/register'),
+          isLogin: true,
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="10 17 15 12 10 7" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="15" y1="12" x2="3" y2="12" strokeLinecap="round"/>
+            </svg>
+          ),
+        },
+  ] as const;
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0D0D0F]/95 backdrop-blur-xl border-t border-white/[0.06]">
       <div className="flex items-stretch h-16">
-        {NAV.map(item => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors ${
-              item.active ? 'text-[#D90429]' : 'text-white/40 active:text-white/70'
-            }`}
-          >
-            <span className="relative">
-              {item.icon}
-              {item.badge != null && item.badge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-[#D90429] text-white text-[9px] font-bold rounded-full min-w-[15px] h-[15px] flex items-center justify-center px-0.5 leading-none">
-                  {item.badge > 9 ? '9+' : item.badge}
+        {NAV.map(item => {
+          const isLoginItem = 'isLogin' in item && item.isLogin;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors ${
+                isLoginItem
+                  ? 'text-[#D90429]'
+                  : item.active
+                  ? 'text-[#D90429]'
+                  : 'text-white/40 active:text-white/70'
+              }`}
+            >
+              {/* Login CTA pill */}
+              {isLoginItem ? (
+                <span className="flex flex-col items-center gap-1">
+                  <span className="w-9 h-9 rounded-full bg-[#D90429] flex items-center justify-center text-white -mt-4 shadow-[0_4px_16px_rgba(217,4,41,0.5)]">
+                    {item.icon}
+                  </span>
+                  <span className="text-[10px] font-bold leading-none text-[#D90429]">{item.label}</span>
                 </span>
+              ) : (
+                <>
+                  <span className="relative">
+                    {item.icon}
+                    {'badge' in item && item.badge != null && item.badge > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-[#D90429] text-white text-[9px] font-bold rounded-full min-w-[15px] h-[15px] flex items-center justify-center px-0.5 leading-none">
+                        {item.badge > 9 ? '9+' : item.badge}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                  {item.active && (
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#D90429] rounded-full" />
+                  )}
+                </>
               )}
-            </span>
-            <span className="text-[10px] font-medium leading-none">{item.label}</span>
-            {item.active && (
-              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#D90429] rounded-full" />
-            )}
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
       {/* Safe area for devices with home indicator */}
       <div className="h-[env(safe-area-inset-bottom)]" />
