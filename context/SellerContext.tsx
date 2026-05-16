@@ -53,6 +53,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('[SellerContext] fetch:', { count: data?.length, error });
       if (!error && data) {
         setDbProducts(data.map(r => mapRow(r as Record<string, unknown>)));
       }
@@ -118,7 +119,9 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
         rating:      product.rating ?? 5.0,
         stock:       product.stock ?? null,
       });
-      if (!error) {
+      if (error) {
+        console.error('[SellerContext] Supabase insert error:', error);
+      } else {
         const newProduct: Comic = { ...product, id, sellerId: sbUser.id, sellerName: user.name };
         setDbProducts(prev => [newProduct, ...prev]);
         notifyFollowers(sbUser.id, user.name, product.title);
