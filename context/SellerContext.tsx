@@ -45,19 +45,19 @@ function mapRow(row: Record<string, unknown>): Comic {
   };
 }
 
-async function uploadImage(base64: string, path: string): Promise<string | null> {
+async function uploadImage(base64: string, path: string): Promise<string> {
   try {
     const [header, data] = base64.split(',');
     const mime  = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
     const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
     const blob  = new Blob([bytes], { type: mime });
     const { error } = await supabase.storage.from('product-covers').upload(path, blob, { upsert: true });
-    if (error) { console.error('[Image upload]', path, error); return null; }
+    if (error) { console.error('[Image upload]', path, error); return base64; }
     return supabase.storage.from('product-covers').getPublicUrl(path).data.publicUrl;
-  } catch { return null; }
+  } catch { return base64; }
 }
 
-async function uploadCover(base64: string, productId: string): Promise<string | null> {
+async function uploadCover(base64: string, productId: string): Promise<string> {
   const ext = base64.match(/data:image\/(\w+)/)?.[1] ?? 'jpg';
   return uploadImage(base64, `${productId}.${ext}`);
 }
@@ -68,8 +68,7 @@ async function uploadPreviews(images: string[], productId: string): Promise<stri
     const src = images[i];
     if (!src.startsWith('data:')) { urls.push(src); continue; }
     const ext = src.match(/data:image\/(\w+)/)?.[1] ?? 'jpg';
-    const url = await uploadImage(src, `${productId}-preview-${i}.${ext}`);
-    if (url) urls.push(url);
+    urls.push(await uploadImage(src, `${productId}-preview-${i}.${ext}`));
   }
   return urls;
 }
@@ -105,7 +104,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
         for (const p of unsynced) {
           const rawCover = p.coverImage ?? p.cover ?? '';
           const coverUrl = rawCover.startsWith('data:')
-            ? (await uploadCover(rawCover, p.id)) ?? ''
+            ? await uploadCover(rawCover, p.id)
             : rawCover;
           const previewUrls = await uploadPreviews(p.previewImages ?? [], p.id);
 
@@ -182,7 +181,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
 
     const rawCover = product.coverImage ?? product.cover ?? '';
     const coverUrl = rawCover.startsWith('data:')
-      ? (await uploadCover(rawCover, id)) ?? ''
+      ? await uploadCover(rawCover, id)
       : rawCover;
     const previewUrls = await uploadPreviews(product.previewImages ?? [], id);
 
@@ -231,7 +230,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
     if (dbProducts.find(p => p.id === id)) {
       const rawCover = product.coverImage ?? product.cover ?? '';
       const coverUrl = rawCover.startsWith('data:')
-        ? (await uploadCover(rawCover, id)) ?? rawCover
+        ? await uploadCover(rawCover, id)
         : rawCover;
       const previewUrls = await uploadPreviews(product.previewImages ?? [], id);
 
@@ -290,7 +289,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
     for (const p of toSync) {
       const rawCover = p.coverImage ?? p.cover ?? '';
       const coverUrl = rawCover.startsWith('data:')
-        ? (await uploadCover(rawCover, p.id)) ?? ''
+        ? await uploadCover(rawCover, p.id)
         : rawCover;
       const previewUrls = await uploadPreviews(p.previewImages ?? [], p.id);
 
