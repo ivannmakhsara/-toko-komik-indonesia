@@ -23,38 +23,55 @@ const SellerContext = createContext<SellerContextType | null>(null);
 
 function mapRow(row: Record<string, unknown>): Comic {
   const cover = (row.cover as string) ?? '';
+  const previewImages = (row.preview_images as string[] | null) ?? [];
   return {
-    id:          row.id          as string,
-    sellerId:    row.seller_id   as string,
-    sellerName:  row.seller_name as string,
-    title:       row.title       as string,
-    author:      row.author      as string,
-    price:       row.price       as number,
-    genre:       (row.genre       as string) ?? '',
-    year:        (row.year        as number) ?? 0,
+    id:            row.id          as string,
+    sellerId:      row.seller_id   as string,
+    sellerName:    row.seller_name as string,
+    title:         row.title       as string,
+    author:        row.author      as string,
+    price:         row.price       as number,
+    genre:         (row.genre       as string) ?? '',
+    year:          (row.year        as number) ?? 0,
     cover,
-    coverImage:  cover,
-    description: (row.description as string) ?? '',
-    condition:   (row.condition   as string) ?? '',
-    rating:      (row.rating      as number) ?? 5.0,
-    pages:       (row.pages       as number) ?? 0,
-    color:       '#ef4444',
-    stock:       (row.stock as number) ?? undefined,
+    coverImage:    cover,
+    previewImages,
+    description:   (row.description as string) ?? '',
+    condition:     (row.condition   as string) ?? '',
+    rating:        (row.rating      as number) ?? 5.0,
+    pages:         (row.pages       as number) ?? 0,
+    color:         '#ef4444',
+    stock:         (row.stock as number) ?? undefined,
   };
 }
 
-async function uploadCover(base64: string, productId: string): Promise<string | null> {
+async function uploadImage(base64: string, path: string): Promise<string | null> {
   try {
     const [header, data] = base64.split(',');
-    const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-    const ext  = mime.split('/')[1] ?? 'jpg';
+    const mime  = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
     const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
     const blob  = new Blob([bytes], { type: mime });
-    const path  = `${productId}.${ext}`;
     const { error } = await supabase.storage.from('product-covers').upload(path, blob, { upsert: true });
-    if (error) { console.error('[Cover upload]', error); return null; }
+    if (error) { console.error('[Image upload]', path, error); return null; }
     return supabase.storage.from('product-covers').getPublicUrl(path).data.publicUrl;
   } catch { return null; }
+}
+
+async function uploadCover(base64: string, productId: string): Promise<string | null> {
+  const ext = base64.match(/data:image\/(\w+)/)?.[1] ?? 'jpg';
+  return uploadImage(base64, `${productId}.${ext}`);
+}
+
+async function uploadPreviews(images: string[], productId: string): Promise<string[]> {
+  const urls: string[] = [];
+  for (let i = 0; i < images.length; i++) {
+    const src = images[i];
+    if (!src.startsWith('data:')) { urls.push(src); continue; }
+    const ext = src.match(/data:image\/(\w+)/)?.[1] ?? 'jpg';
+    const url = await uploadImage(src, `${productId}-preview-${i}.${ext}`);
+    if (url) urls.push(url);
+  }
+  return urls;
 }
 
 export function SellerProvider({ children }: { children: React.ReactNode }) {
@@ -65,7 +82,6 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function load() {
-      // 1. Fetch all products from Supabase
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -76,7 +92,6 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
       setDbProducts(dbRows.map(r => mapRow(r as Record<string, unknown>)));
       const dbIds = new Set(dbRows.map(r => r.id as string));
 
-      // 2. Load localStorage products not already in Supabase
       let localRows: Comic[] = [];
       try {
         const raw = localStorage.getItem(LOCAL_KEY);
@@ -85,7 +100,6 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
       const unsynced = localRows.filter(p => !dbIds.has(p.id));
       setLocalProducts(unsynced);
 
-      // 3. Auto-sync localStorage products to Supabase if user is logged in
       if (unsynced.length > 0 && user) {
         const synced: string[] = [];
         for (const p of unsynced) {
@@ -93,21 +107,23 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
           const coverUrl = rawCover.startsWith('data:')
             ? (await uploadCover(rawCover, p.id)) ?? ''
             : rawCover;
+          const previewUrls = await uploadPreviews(p.previewImages ?? [], p.id);
 
           const { error: insertErr } = await supabase.from('products').upsert({
-            id:          p.id,
-            seller_id:   user.id,
-            seller_name: user.name,
-            title:       p.title,
-            author:      p.author ?? '',
-            price:       p.price,
-            genre:       p.genre,
-            year:        p.year,
-            cover:       coverUrl,
-            description: p.description,
-            condition:   p.condition ?? '',
-            rating:      p.rating ?? 5.0,
-            stock:       p.stock ?? null,
+            id:             p.id,
+            seller_id:      user.id,
+            seller_name:    user.name,
+            title:          p.title,
+            author:         p.author ?? '',
+            price:          p.price,
+            genre:          p.genre,
+            year:           p.year,
+            cover:          coverUrl,
+            preview_images: previewUrls.length > 0 ? previewUrls : null,
+            description:    p.description,
+            condition:      p.condition ?? '',
+            rating:         p.rating ?? 5.0,
+            stock:          p.stock ?? null,
           });
           if (!insertErr) {
             synced.push(p.id);
@@ -168,25 +184,32 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
     const coverUrl = rawCover.startsWith('data:')
       ? (await uploadCover(rawCover, id)) ?? ''
       : rawCover;
+    const previewUrls = await uploadPreviews(product.previewImages ?? [], id);
 
     const { error } = await supabase.from('products').insert({
       id,
-      seller_id:   user.id,
-      seller_name: user.name,
-      title:       product.title,
-      author:      product.author ?? '',
-      price:       product.price,
-      genre:       product.genre,
-      year:        product.year,
-      cover:       coverUrl,
-      description: product.description,
-      condition:   product.condition ?? '',
-      rating:      product.rating ?? 5.0,
-      stock:       product.stock ?? null,
+      seller_id:      user.id,
+      seller_name:    user.name,
+      title:          product.title,
+      author:         product.author ?? '',
+      price:          product.price,
+      genre:          product.genre,
+      year:           product.year,
+      cover:          coverUrl,
+      preview_images: previewUrls.length > 0 ? previewUrls : null,
+      description:    product.description,
+      condition:      product.condition ?? '',
+      rating:         product.rating ?? 5.0,
+      stock:          product.stock ?? null,
     });
 
     if (!error) {
-      const newProduct: Comic = { ...product, id, sellerId: user.id, sellerName: user.name, cover: coverUrl, coverImage: coverUrl };
+      const newProduct: Comic = {
+        ...product, id,
+        sellerId: user.id, sellerName: user.name,
+        cover: coverUrl, coverImage: coverUrl,
+        previewImages: previewUrls,
+      };
       setDbProducts(prev => [newProduct, ...prev]);
       notifyFollowers(user.id, user.name, product.title);
       return;
@@ -210,19 +233,25 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
       const coverUrl = rawCover.startsWith('data:')
         ? (await uploadCover(rawCover, id)) ?? rawCover
         : rawCover;
+      const previewUrls = await uploadPreviews(product.previewImages ?? [], id);
+
       await supabase.from('products').update({
-        title:       product.title,
-        author:      product.author,
-        price:       product.price,
-        genre:       product.genre,
-        year:        product.year,
-        cover:       coverUrl,
-        description: product.description,
-        condition:   product.condition,
-        stock:       product.stock ?? null,
+        title:          product.title,
+        author:         product.author,
+        price:          product.price,
+        genre:          product.genre,
+        year:           product.year,
+        cover:          coverUrl,
+        preview_images: previewUrls.length > 0 ? previewUrls : null,
+        description:    product.description,
+        condition:      product.condition,
+        stock:          product.stock ?? null,
       }).eq('id', id);
+
       setDbProducts(prev => prev.map(p =>
-        p.id === id ? { ...product, id, sellerId: p.sellerId, sellerName: p.sellerName, cover: coverUrl, coverImage: coverUrl } : p
+        p.id === id
+          ? { ...product, id, sellerId: p.sellerId, sellerName: p.sellerName, cover: coverUrl, coverImage: coverUrl, previewImages: previewUrls }
+          : p
       ));
       return;
     }
@@ -263,21 +292,23 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
       const coverUrl = rawCover.startsWith('data:')
         ? (await uploadCover(rawCover, p.id)) ?? ''
         : rawCover;
+      const previewUrls = await uploadPreviews(p.previewImages ?? [], p.id);
 
       const { error } = await supabase.from('products').upsert({
-        id:          p.id,
-        seller_id:   user.id,
-        seller_name: user.name,
-        title:       p.title,
-        author:      p.author ?? '',
-        price:       p.price,
-        genre:       p.genre,
-        year:        p.year,
-        cover:       coverUrl,
-        description: p.description,
-        condition:   p.condition ?? '',
-        rating:      p.rating ?? 5.0,
-        stock:       p.stock ?? null,
+        id:             p.id,
+        seller_id:      user.id,
+        seller_name:    user.name,
+        title:          p.title,
+        author:         p.author ?? '',
+        price:          p.price,
+        genre:          p.genre,
+        year:           p.year,
+        cover:          coverUrl,
+        preview_images: previewUrls.length > 0 ? previewUrls : null,
+        description:    p.description,
+        condition:      p.condition ?? '',
+        rating:         p.rating ?? 5.0,
+        stock:          p.stock ?? null,
       });
 
       if (error) {
