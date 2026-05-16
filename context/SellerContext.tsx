@@ -150,7 +150,11 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const allDbAndLocal = [...dbProducts, ...localProducts];
+  const localIds = new Set(localProducts.map(p => p.id));
+  const allDbAndLocal = [
+    ...dbProducts.filter(p => !localIds.has(p.id)),
+    ...localProducts,
+  ];
 
   function notifyFollowers(sellerId: string, sellerName: string, productTitle: string) {
     try {
