@@ -94,7 +94,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
             ? (await uploadCover(rawCover, p.id)) ?? ''
             : rawCover;
 
-          const { error: insertErr } = await supabase.from('products').insert({
+          const { error: insertErr } = await supabase.from('products').upsert({
             id:          p.id,
             seller_id:   user.id,
             seller_name: user.name,
@@ -260,7 +260,7 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
         ? (await uploadCover(rawCover, p.id)) ?? ''
         : rawCover;
 
-      const { error } = await supabase.from('products').insert({
+      const { error } = await supabase.from('products').upsert({
         id:          p.id,
         seller_id:   user.id,
         seller_name: user.name,
