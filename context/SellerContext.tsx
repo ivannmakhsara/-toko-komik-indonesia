@@ -21,6 +21,7 @@ interface SellerContextType {
 const SellerContext = createContext<SellerContextType | null>(null);
 
 function mapRow(row: Record<string, unknown>): Comic {
+  const cover = (row.cover as string) ?? '';
   return {
     id:          row.id          as string,
     sellerId:    row.seller_id   as string,
@@ -30,7 +31,8 @@ function mapRow(row: Record<string, unknown>): Comic {
     price:       row.price       as number,
     genre:       (row.genre       as string) ?? '',
     year:        (row.year        as number) ?? 0,
-    cover:       (row.cover       as string) ?? '',
+    cover,
+    coverImage:  cover,
     description: (row.description as string) ?? '',
     condition:   (row.condition   as string) ?? '',
     rating:      (row.rating      as number) ?? 5.0,
@@ -38,6 +40,20 @@ function mapRow(row: Record<string, unknown>): Comic {
     color:       '#ef4444',
     stock:       (row.stock as number) ?? undefined,
   };
+}
+
+async function uploadCover(base64: string, productId: string): Promise<string | null> {
+  try {
+    const [header, data] = base64.split(',');
+    const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
+    const ext  = mime.split('/')[1] ?? 'jpg';
+    const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
+    const blob  = new Blob([bytes], { type: mime });
+    const path  = `${productId}.${ext}`;
+    const { error } = await supabase.storage.from('product-covers').upload(path, blob, { upsert: true });
+    if (error) { console.error('[Cover upload]', error); return null; }
+    return supabase.storage.from('product-covers').getPublicUrl(path).data.publicUrl;
+  } catch { return null; }
 }
 
 export function SellerProvider({ children }: { children: React.ReactNode }) {
@@ -74,18 +90,23 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
         if (sbUser) {
           const synced: string[] = [];
           for (const p of unsynced) {
+            const rawCover = p.coverImage ?? p.cover ?? '';
+            const coverUrl = rawCover.startsWith('data:')
+              ? (await uploadCover(rawCover, p.id)) ?? ''
+              : rawCover;
+
             const { error: insertErr } = await supabase.from('products').insert({
               id:          p.id,
               seller_id:   sbUser.id,
               seller_name: p.sellerName,
               title:       p.title,
-              author:      p.author,
+              author:      p.author ?? '',
               price:       p.price,
               genre:       p.genre,
               year:        p.year,
-              cover:       p.cover,
+              cover:       coverUrl,
               description: p.description,
-              condition:   p.condition,
+              condition:   p.condition ?? '',
               rating:      p.rating ?? 5.0,
               stock:       p.stock ?? null,
             });
@@ -148,25 +169,31 @@ export function SellerProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { user: sbUser } } = await supabase.auth.getUser();
     if (sbUser) {
+      // Upload cover image to Supabase Storage if it's a base64 data URL
+      const rawCover = product.coverImage ?? product.cover ?? '';
+      const coverUrl = rawCover.startsWith('data:')
+        ? (await uploadCover(rawCover, id)) ?? ''
+        : rawCover;
+
       const { error } = await supabase.from('products').insert({
         id,
         seller_id:   sbUser.id,
         seller_name: user.name,
         title:       product.title,
-        author:      product.author,
+        author:      product.author ?? '',
         price:       product.price,
         genre:       product.genre,
         year:        product.year,
-        cover:       product.cover,
+        cover:       coverUrl,
         description: product.description,
-        condition:   product.condition,
+        condition:   product.condition ?? '',
         rating:      product.rating ?? 5.0,
         stock:       product.stock ?? null,
       });
       if (error) {
         console.error('[SellerContext] Supabase insert error:', error);
       } else {
-        const newProduct: Comic = { ...product, id, sellerId: sbUser.id, sellerName: user.name };
+        const newProduct: Comic = { ...product, id, sellerId: sbUser.id, sellerName: user.name, cover: coverUrl, coverImage: coverUrl };
         setDbProducts(prev => [newProduct, ...prev]);
         notifyFollowers(sbUser.id, user.name, product.title);
         return;
